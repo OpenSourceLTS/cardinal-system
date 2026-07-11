@@ -23,7 +23,7 @@ _EXECUTOR = ThreadPoolExecutor(max_workers=_PARALLEL_WORKERS)
 
 MCP_VERSION = "1.0.0"
 SERVER_NAME = "cardinal_system_mcp"
-SERVER_VERSION = "4.0.0"
+SERVER_VERSION = "0.0.1"
 
 
 # Builds the Router by auto-discovering all tool classes from the filesystem.

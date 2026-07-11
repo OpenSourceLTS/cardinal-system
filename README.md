@@ -1,4 +1,4 @@
-# Cardinal System v4.0
+# Cardinal System v0.0.1
 
 A lightweight AI assistant framework built on **Cognitive Offloading** — all logic lives in a deterministic Python engine while a small local LLM (via [LM Studio](https://lmstudio.ai/)) acts solely as a natural-language-to-tool-call transducer.
 

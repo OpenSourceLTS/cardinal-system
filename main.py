@@ -5,7 +5,7 @@ from openai import OpenAI
 
 # CLI mode: interactive prompt loop for direct AI interaction via terminal.
 def run_cli(engine):
-    print("Cardinal AI v4.0 Initialized. (Type 'quit' to exit)")
+    print("Cardinal AI v0.0.1 Initialized. (Type 'quit' to exit)")
     print("Features: structured tool calls via MCP.")
 
     while True:

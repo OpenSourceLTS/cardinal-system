@@ -1,4 +1,4 @@
-# Cardinal System v4.0 — Developer Documentation
+# Cardinal System v0.0.1 — Developer Documentation
 
 Welcome to the Cardinal System. This documentation covers the architectural philosophy, execution engine, complete tool reference, and SDK tool creation guide.
 

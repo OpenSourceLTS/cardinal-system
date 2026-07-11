@@ -71,7 +71,7 @@ def banner():
     w = min(shutil.get_terminal_size().columns, 60)
     line = "=" * w
     print(f"{Colors.CYAN}{Colors.BOLD}{line}{Colors.RESET}")
-    print(f"{Colors.CYAN}{Colors.BOLD}  CARDINAL SYSTEM v4.0{Colors.RESET}")
+    print(f"{Colors.CYAN}{Colors.BOLD}  CARDINAL SYSTEM v0.0.1{Colors.RESET}")
     print(f"{Colors.DIM}  collection of Verbs | DAG Pipelining | Pattern Caching | Simplex/Duplex{Colors.RESET}")
     print(f"{Colors.CYAN}{Colors.BOLD}{line}{Colors.RESET}")
 
