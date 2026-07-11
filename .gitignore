@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Node
+ui/node_modules/
+ui/.svelte-kit/
+ui/build/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local config / secrets
+.env
+.env.*
+*.local
+local_settings.py
+
+# OpenCode
+.local/
+
+# User data (generated at runtime)
+memory/history/
+memory/notes/
+
+# Logs
+*.log

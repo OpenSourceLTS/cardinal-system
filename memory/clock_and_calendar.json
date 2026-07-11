@@ -1,0 +1,11 @@
+{
+  "timezone": "UTC",
+  "alarms": [],
+  "timers": [],
+  "stopwatch": {
+    "running": false,
+    "start": null,
+    "elapsed": 0
+  },
+  "events": []
+}

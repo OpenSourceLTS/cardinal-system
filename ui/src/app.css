@@ -1,0 +1,54 @@
+@import "tailwindcss";
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/themes/cerberus";
+@plugin "daisyui";
+
+[data-theme='cerberus'] {
+  --color-primary-50: oklch(0.92 0.05 185);
+  --color-primary-100: oklch(0.85 0.09 185);
+  --color-primary-200: oklch(0.78 0.13 185);
+  --color-primary-300: oklch(0.71 0.17 185);
+  --color-primary-400: oklch(0.64 0.21 185);
+  --color-primary-500: oklch(0.57 0.25 185);
+  --color-primary-600: oklch(0.5 0.22 185);
+  --color-primary-700: oklch(0.43 0.19 185);
+  --color-primary-800: oklch(0.36 0.15 185);
+  --color-primary-900: oklch(0.29 0.11 185);
+  --color-primary-950: oklch(0.22 0.07 185);
+}
+
+:root {
+  --bg-dark: #f5f7fa;
+  --bg-panel: #ffffff;
+  --bg-panel-light: #eef1f5;
+  --accent-cyan: #00a896;
+  --accent-blue: #0066cc;
+  --accent-warning: #ffaa00;
+  --text-main: #1a1d23;
+  --text-dim: #8a8f9d;
+  --border-glow: rgba(0, 168, 150, 0.2);
+  --panel-header-bg: linear-gradient(90deg, rgba(0, 168, 150, 0.08), transparent);
+  --display-bg: radial-gradient(circle at center, #f0f3f7 0%, #e8ecf0 100%);
+  --step-bg: rgba(0, 168, 150, 0.05);
+  --input-focus-shadow: rgba(0, 168, 150, 0.2);
+  --msg-user-text: #ffffff;
+  --msg-ai-border: rgba(0, 168, 150, 0.3);
+}
+
+[data-theme~="dark"] {
+  --bg-dark: #05080a;
+  --bg-panel: #0a1015;
+  --bg-panel-light: #0f1820;
+  --accent-cyan: #00ffcc;
+  --accent-blue: #0088ff;
+  --accent-warning: #ffaa00;
+  --text-main: #e0f7fa;
+  --text-dim: #546e7a;
+  --border-glow: rgba(0, 255, 204, 0.3);
+  --panel-header-bg: linear-gradient(90deg, rgba(0, 255, 204, 0.1), transparent);
+  --display-bg: radial-gradient(circle at center, #0f1820 0%, #05080a 100%);
+  --step-bg: rgba(0, 255, 204, 0.05);
+  --input-focus-shadow: rgba(0, 255, 204, 0.2);
+  --msg-user-text: #ffffff;
+  --msg-ai-border: rgba(0, 255, 204, 0.3);
+}

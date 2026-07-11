@@ -1,0 +1,44 @@
+{
+  "name": "notes",
+  "description": "CRUD for .md notes in memory/notes/. Supports line-level editing, timestamps, and find/replace.",
+  "risk_tier": "STATEFUL",
+  "verbs": ["list", "read", "save", "append", "delete", "change", "rename", "search"],
+  "target_hint": "filename",
+  "payload_hint": "content, line numbers, or find/replace query",
+  "manifest": {
+    "example": {
+      "verb": "change",
+      "target": "groceries",
+      "payload": "milk -> oat milk"
+    },
+    "v@p": {
+      "list": [
+        ["", "list all note filenames with created/modified dates"]
+      ],
+      "read": [
+        ["filename", "line/range (optional, e.g., 3 or 3-5)"]
+      ],
+      "save": [
+        ["filename", "content"],
+        ["", "content (auto-name from first 3 words)"]
+      ],
+      "append": [
+        ["filename", "content to add to the end of the note"]
+      ],
+      "delete": [
+        ["filename", "line/range (optional, deletes whole file if omitted)"]
+      ],
+      "change": [
+        ["filename", "line | new_content (replace line)"],
+        ["filename", "+line | content (insert before line)"],
+        ["filename", "old_text -> new_text (find and replace)"]
+      ],
+      "rename": [
+        ["filename", "new_filename"]
+      ],
+      "search": [
+        ["filename (optional)", "keyword (returns matching lines and line numbers)"]
+      ]
+    }
+  }
+}

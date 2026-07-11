@@ -1,0 +1,27 @@
+{
+  "name": "libretranslate",
+  "description": "Self-hosted machine translation using LibreTranslate/Argos. Translate between 50+ languages. Auto-downloads models on first use. Supports detecting language of any text. Available language codes: ar (Arabic), az (Azerbaijani), bg (Bulgarian), bn (Bengali), ca (Catalan), cs (Czech), da (Danish), de (German), el (Greek), en (English), eo (Esperanto), es (Spanish), et (Estonian), eu (Basque), fa (Persian), fi (Finnish), fr (French), ga (Irish), gl (Galician), he (Hebrew), hi (Hindi), hu (Hungarian), id (Indonesian), it (Italian), ja (Japanese), ko (Korean), ky (Kyrgyz), lt (Lithuanian), lv (Latvian), ms (Malay), nb (Norwegian Bokmål), nl (Dutch), pb (Pushto), pl (Polish), pt (Portuguese), ro (Romanian), ru (Russian), sk (Slovak), sl (Slovenian), sq (Albanian), sv (Swedish), sw (Swahili), th (Thai), tl (Tagalog), tr (Turkish), uk (Ukrainian), ur (Urdu), vi (Vietnamese), zh (Chinese Simplified), zt (Chinese Traditional).",
+  "risk_tier": "NETWORK",
+  "verbs": ["translate", "detect", "list"],
+  "target_hint": "language_code (e.g. bn, fr, ja) for translate; leave empty for detect; 'languages' or 'installed' for list",
+  "payload_hint": "text | source_lang (translate); text to detect (detect)",
+  "manifest": {
+    "example": {
+      "verb": "detect",
+      "target": "",
+      "payload": "Bonjour le monde"
+    },
+    "v@p": {
+      "translate": [
+        ["language_code", "text | source_lang (source optional, defaults to en)"]
+      ],
+      "detect": [
+        ["", "text to detect language of"]
+      ],
+      "list": [
+        ["languages", ""],
+        ["installed", ""]
+      ]
+    }
+  }
+}

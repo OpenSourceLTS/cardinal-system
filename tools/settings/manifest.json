@@ -1,0 +1,33 @@
+{
+  "name": "settings",
+  "description": "User preferences and personalization settings for response style, tone, language, and behavior.",
+  "risk_tier": "STATEFUL",
+  "verbs": ["get", "set", "delete"],
+  "target_hint": "preference name or 'list' for all preferences",
+  "payload_hint": "preference value for set, or setting name for get/delete",
+  "manifest": {
+    "example": {
+      "verb": "set",
+      "target": "timezone",
+      "payload": "Asia/Dhaka"
+    },
+    "v@p": {
+      "get": [
+        ["setting", "setting_name"],
+        ["timezone", ""],
+        ["time_format", ""],
+        ["spoken_lang", ""],
+        ["list", ""]
+      ],
+      "set": [
+        ["setting", "setting_name|value"],
+        ["timezone", "continent/city | country | city | country/city | UTC+OFFSET | +OFFSET"],
+        ["time_format", "12h | 24h"],
+        ["spoken_lang", "language code (e.g. bn, fr, ja, de, es)"]
+      ],
+      "delete": [
+        ["setting", "setting_name"]
+      ]
+    }
+  }
+}

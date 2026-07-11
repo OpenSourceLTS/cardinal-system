@@ -1,0 +1,8 @@
+flask>=3.0.0
+requests>=2.31.0
+tzdata
+argos-translate-lt
+edge-tts
+langdetect
+openai>=1.0.0
+

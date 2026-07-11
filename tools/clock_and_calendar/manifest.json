@@ -1,0 +1,50 @@
+{
+  "name": "clock_calendar",
+  "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
+  "risk_tier": "SAFE",
+  "verbs": ["get", "set", "delete"],
+  "target_hint": "time, date, moon, timezone, alarm, timer, event",
+  "payload_hint": "value, date, time, or query",
+  "manifest": {
+    "example": {
+      "verb": "get",
+      "target": "day_of_week",
+      "payload": "today"
+    },
+    "v@p": {
+      "get": [
+        ["time", "tz (optional)"],
+        ["date", ""],
+        ["datetime", "tz (optional)"],
+        ["timezone", ""],
+        ["moon", "date (optional)"],
+        ["season", "date (optional)"],
+        ["sun", "rise/set date tz"],
+        ["alarms", ""],
+        ["timers", ""],
+        ["stopwatch", ""],
+        ["events", ""],
+        ["between", "d1 to d2 (days/weeks/months)"],
+        ["until", "time/date"],
+        ["since", "time/date"],
+        ["date_offset", "date +/-days"],
+        ["day_of_week", "date"],
+        ["is_leap_year", "year"],
+        ["timezone", "src to dst"],
+        ["time_format", "time to 12h/24h"],
+        ["calendar", "date to hijri"]
+      ],
+      "set": [
+        ["alarm", "time label"],
+        ["timer", "duration"],
+        ["stopwatch", "start/stop/reset"],
+        ["event", "desc date time"]
+      ],
+      "delete": [
+        ["alarm", "id"],
+        ["timer", "id"],
+        ["event", "id"]
+      ]
+    }
+  }
+}
