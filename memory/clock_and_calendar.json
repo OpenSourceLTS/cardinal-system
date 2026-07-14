@@ -1,6 +1,19 @@
 {
   "timezone": "UTC",
-  "alarms": [],
+  "alarms": [
+    {
+      "id": "0ff5f3fa",
+      "hour": 18,
+      "minute": 30,
+      "label": ""
+    },
+    {
+      "id": "eb708321",
+      "hour": 18,
+      "minute": 30,
+      "label": ""
+    }
+  ],
   "timers": [],
   "stopwatch": {
     "running": false,

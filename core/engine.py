@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Optional
 from pathlib import Path
 import requests
@@ -28,40 +29,120 @@ def _get_api_key() -> str:
 
 
 def _get_model() -> str:
-    return _read_settings().get("fc_model", "functiongemma-270m-it")
+    return _read_settings().get("fc_model", "functiongemma-finetuned")
 
 
 def _get_forward_model() -> str:
-    return "qwen3-0.6b-heretic-abliterated-uncensored"
+    return _read_settings().get("llm_model", "qwen3-0.6b-heretic-abliterated-uncensored")
 
 
 def _get_forward_base_url() -> str:
-    return _read_settings().get("llm_base_url", "http://localhost:1234")
+    return _read_settings().get("llm_base_url", "http://localhost:1235")
 
 
 def _get_forward_api_key() -> str:
     return _read_settings().get("llm_api_key", "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK")
 
 
-def _build_system_prompt() -> str:
-    return (
-        "You are Cardinal, an AI assistant with tools.\n"
-        "Directives:\n"
-        "- Use tool calls to fetch dynamic information or perform state changes.\n"
-        "- Never answer from internal knowledge. Base responses on tool outputs.\n"
-        "- For conversation or complex reasoning, forward to the 'llm' tool."
+def _build_tools_spec() -> list[dict]:
+    from core.manifest import discover_tools as _discover_tools
+
+    specs = []
+    for t in _discover_tools():
+        vp = t.get("manifest", {}).get("a@p", {})
+        all_targets = []
+        for entries in vp.values():
+            for e in entries:
+                tg = e[0] if e else ""
+                if tg and tg not in all_targets:
+                    all_targets.append(tg)
+        props = {
+            "action": {"type": "string", "enum": t["actions"]},
+            "target": {"type": "string"},
+            "payload": {"type": "string"},
+        }
+        if all_targets:
+            props["target"] = {"type": "string", "enum": all_targets}
+        specs.append({
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "parameters": {
+                    "type": "object",
+                    "properties": props,
+                    "required": ["action"],
+                },
+            },
+        })
+    return specs
+
+
+_TOOLS_SPEC = _build_tools_spec()
+
+_SYSTEM_PROMPT = (
+    "You are Cardinal, an AI assistant with tools.\n"
+    "Directives:\n"
+    "- Use tool calls to fetch dynamic information or perform state changes.\n"
+    "- Never answer from internal knowledge. Base responses on tool outputs.\n"
+    "- For conversation or complex reasoning, forward to the 'llm' tool."
+)
+
+# FunctionGemma native format regex
+_FG_CALL_RE = re.compile(
+    r"<start_function_call>call:(?P<tool>\w+)\{(?P<args>[^}]*)\}<end_function_call>"
+)
+
+
+def _parse_fg(text: str) -> list[dict]:
+    calls = []
+    for match in _FG_CALL_RE.finditer(text):
+        tool = match.group("tool")
+        args = {}
+        for part in match.group("args").split(","):
+            part = part.strip()
+            if ":" not in part:
+                continue
+            k, _, v = part.partition(":")
+            args[k.strip()] = v.strip().replace("<escape>", "")
+        calls.append({"tool": tool, "arguments": args})
+    return calls
+
+
+def _chat_completion(
+    messages: list[dict],
+    model: str,
+    base_url: str,
+    api_key: str,
+    tools: Optional[list] = None,
+) -> str:
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {api_key}",
+    }
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": 0.3,
+        "max_tokens": 2000,
+    }
+    if tools is not None:
+        payload["tools"] = tools
+    resp = requests.post(
+        f"{base_url}/v1/chat/completions",
+        json=payload,
+        headers=headers,
+        timeout=300,
     )
-
-
-_SYSTEM_PROMPT = _build_system_prompt()
+    resp.raise_for_status()
+    data = resp.json()
+    content = data["choices"][0]["message"]["content"] or ""
+    return content
 
 
 class CardinalSystemEngine:
     def __init__(self):
         self.session_id: Optional[str] = None
-
-    def _build_input(self, user_input: str) -> str:
-        return user_input
 
     def process_request(self, user_input: str, session_id: str = "") -> dict:
         self.session_id = session_id or None
@@ -69,62 +150,74 @@ class CardinalSystemEngine:
         CURRENT_SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
         CURRENT_SESSION_FILE.write_text(self.session_id or "", encoding="utf-8")
 
-        lm_studio_url = _get_lm_studio_url()
-        api_key = _get_api_key()
+        url = _get_lm_studio_url()
+        key = _get_api_key()
         model = _get_model()
 
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}",
-        }
-
-        payload = {
-            "model": model,
-            "input": self._build_input(user_input),
-            "system_prompt": _SYSTEM_PROMPT,
-            "integrations": ["mcp/cardinal-system"],
-            "context_length": 8192,
-            "temperature": 0.3,
-            "max_output_tokens": 2000,
-        }
-
         try:
-            resp = requests.post(
-                f"{lm_studio_url}/api/v1/chat",
-                json=payload,
-                headers=headers,
-                timeout=300,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+            messages = [
+                {"role": "developer", "content": _SYSTEM_PROMPT},
+                {"role": "user", "content": user_input},
+            ]
+            output = _chat_completion(messages, model, url, key, tools=_TOOLS_SPEC)
         except requests.exceptions.ConnectionError:
-            return {"success": False, "error": "Cannot connect to LM Studio at " + lm_studio_url}
+            return {"success": False, "error": "Cannot connect to LM Studio at " + url}
         except requests.exceptions.Timeout:
             return {"success": False, "error": "LM Studio request timed out"}
         except Exception as e:
             return {"success": False, "error": f"LM Studio error: {e}"}
 
-        output_items = data.get("output", [])
-        texts = []
+        fg_calls = _parse_fg(output)
+
+        if not fg_calls:
+            return {
+                "success": True,
+                "response": output,
+                "results": [],
+            }
+
+        from core.mcp_server import _execute_structured
+
         tool_results = []
-        for item in output_items:
-            if item.get("type") == "message":
-                texts.append(item.get("content", ""))
-            elif item.get("type") == "tool_call":
-                tool_results.append({
-                    "tool": item.get("tool", ""),
-                    "arguments": item.get("arguments", {}),
-                    "output": item.get("output", ""),
-                })
+        for call in fg_calls:
+            tool_name = call["tool"]
+            args = call["arguments"]
+            payload = args.get("payload", "")
+            if payload == "$prev":
+                payload = ""
+            result = _execute_structured(
+                tool_name,
+                args.get("action", ""),
+                args.get("target", ""),
+                payload,
+            )
+            tool_results.append({
+                "tool": tool_name,
+                "arguments": args,
+                "output": result.get("output", ""),
+                "error": result.get("error"),
+            })
 
-        response_text = " ".join(texts).strip()
-        stats = data.get("stats", {})
+        for i, call in enumerate(fg_calls):
+            if call["tool"] == "llm" and tool_results[i].get("output"):
+                return {
+                    "success": True,
+                    "response": tool_results[i]["output"],
+                    "results": tool_results,
+                }
 
+        has_errors = any(r.get("error") for r in tool_results)
+        if has_errors:
+            errors = [r["error"] for r in tool_results if r.get("error")]
+            return {
+                "success": False,
+                "response": "\n".join(errors),
+                "results": tool_results,
+            }
+
+        # Return raw tool result (FG is a dispatcher, not a chat model)
         return {
             "success": True,
-            "is_chat": True,
-            "response": response_text,
+            "response": tool_results[0].get("output", str(tool_results)),
             "results": tool_results,
-            "stats": stats,
-            "raw_output": json.dumps(output_items, ensure_ascii=False),
         }

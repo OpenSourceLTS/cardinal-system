@@ -190,7 +190,7 @@ def _handle_tools_call(msg: dict) -> dict:
     params = msg.get("params", {})
     arguments = params.get("arguments", {})
     tool_name = params.get("name", "")
-    verb = arguments.get("verb", "")
+    verb = arguments.get("verb") or arguments.get("action", "")
     target = arguments.get("target", "")
     payload = arguments.get("payload", "")
 

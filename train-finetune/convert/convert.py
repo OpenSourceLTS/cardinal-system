@@ -90,7 +90,11 @@ def pad_embeddings(model_dir: Path, target_vocab: int) -> bool:
                 modified = True
 
         if modified:
-            save_file(tensors, str(st_path))
+            import tempfile
+            tmp = str(st_path) + ".tmp"
+            save_file(tensors, tmp)
+            os.replace(tmp, str(st_path))
+            del tensors
 
     return modified
 

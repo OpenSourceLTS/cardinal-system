@@ -6,3 +6,5 @@ spoken_lang: bn
 time_format: 12h
 timezone: Asia/Dhaka
 tone: casual
+fc_base_url: http://localhost:1234
+llm_base_url: http://localhost:1234

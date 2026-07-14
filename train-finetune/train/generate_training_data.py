@@ -212,6 +212,24 @@ def generate_jsonl(
         for code in lang_codes:
             add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d), (e, f)])
 
+    for entry in multi_config.get("no_tool", []):
+        queries = entry["query"]
+        responses = entry["response"]
+        for code in lang_codes:
+            query = queries.get(code, queries.get("en", ""))
+            response = responses.get(code, responses.get("en", ""))
+            if not query or not response:
+                continue
+            records.append({
+                "messages": [
+                    {"role": "developer", "content": DEVELOPER_CONTENT},
+                    {"role": "user", "content": query},
+                    {"role": "assistant", "content": response},
+                ],
+                "tools": tools_schema,
+            })
+
+    # Legacy alias for "irrelevant"
     for entry in multi_config.get("irrelevant", []):
         queries = entry["query"]
         responses = entry["response"]
@@ -248,7 +266,7 @@ def generate_jsonl(
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate FunctionGemma training data")
     parser.add_argument("--lang", help="Comma-separated language codes (default: all 30)")
-    parser.add_argument("--templates", type=int, default=5, help="Max templates per combo (default: 5)")
+    parser.add_argument("--templates", type=int, default=10, help="Max templates per combo (default: 10)")
     parser.add_argument("--output-dir", help="Output directory (default: script dir)")
     parser.add_argument("--manifests-dir", help="Manifests directory (default: ../../tools)")
     return parser.parse_args()

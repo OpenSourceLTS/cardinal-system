@@ -90,10 +90,6 @@
           "src to dst"
         ],
         [
-          "time_format",
-          "time to 12h/24h"
-        ],
-        [
           "calendar",
           "date to hijri"
         ]
