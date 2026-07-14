@@ -10,7 +10,7 @@ import json
 # If none fits, add a new one — this list tracks every top-level action name.
 # Each tool declares its own subset under "actions" in manifest.json;
 # the router validates against the tool's own list, not this master list.
-CANONICAL_VERBS = [
+CANONICAL_ACTIONS = [
     "append", "approve", "archive", "ask", "block", "bookmark", "branch",
     "calculate", "change", "cancel", "check", "clear", "comment", "commit",
     "complete", "compress", "convert", "copy", "create",
