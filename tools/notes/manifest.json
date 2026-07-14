@@ -2,67 +2,195 @@
   "name": "notes",
   "description": "CRUD for .md notes in memory/notes/. Supports line-level editing, timestamps, and find/replace.",
   "risk_tier": "STATEFUL",
-  "actions": ["list", "read", "save", "append", "delete", "change", "rename", "search"],
+  "actions": [
+    "list",
+    "read",
+    "save",
+    "append",
+    "delete",
+    "change",
+    "rename",
+    "search"
+  ],
   "target_hint": "filename",
   "payload_hint": "content, line numbers, or find/replace query",
   "manifest": {
     "example": {
-      "verb": "change",
+      "action": "change",
       "target": "groceries",
       "payload": "milk -> oat milk"
     },
-    "v@p": {
+    "a@p": {
       "list": [
-        ["", "list all note filenames with created/modified dates"]
+        [
+          "",
+          "list all note filenames with created/modified dates"
+        ]
       ],
       "read": [
-        ["filename", "line/range (optional, e.g., 3 or 3-5)"]
+        [
+          "filename",
+          "line/range (optional, e.g., 3 or 3-5)"
+        ]
       ],
       "save": [
-        ["filename", "content"],
-        ["", "content (auto-name from first 3 words)"]
+        [
+          "filename",
+          "content"
+        ],
+        [
+          "",
+          "content (auto-name from first 3 words)"
+        ]
       ],
       "append": [
-        ["filename", "content to add to the end of the note"]
+        [
+          "filename",
+          "content to add to the end of the note"
+        ]
       ],
       "delete": [
-        ["filename", "line/range (optional, deletes whole file if omitted)"]
+        [
+          "filename",
+          "line/range (optional, deletes whole file if omitted)"
+        ]
       ],
       "change": [
-        ["filename", "line | new_content (replace line)"],
-        ["filename", "+line | content (insert before line)"],
-        ["filename", "old_text -> new_text (find and replace)"]
+        [
+          "filename",
+          "line | new_content (replace line)"
+        ],
+        [
+          "filename",
+          "+line | content (insert before line)"
+        ],
+        [
+          "filename",
+          "old_text -> new_text (find and replace)"
+        ]
       ],
       "rename": [
-        ["filename", "new_filename"]
+        [
+          "filename",
+          "new_filename"
+        ]
       ],
       "search": [
-        ["filename (optional)", "keyword (returns matching lines and line numbers)"]
+        [
+          "filename (optional)",
+          "keyword (returns matching lines and line numbers)"
+        ]
       ]
     }
   },
-  "schema": {
-    "function": {
-      "name": "notes",
-      "description": "CRUD for .md notes. Supports line-level editing, timestamps, and find/replace.",
-      "parameters": {
-        "type": "OBJECT",
-        "properties": {
-          "action": {
-            "type": "STRING",
-            "description": "Action verb. One of: list, read, save, append, delete, change, rename, search"
-          },
-          "target": {
-            "type": "STRING",
-            "description": "Note filename"
-          },
-          "payload": {
-            "type": "STRING",
-            "description": "Content, line numbers, or find/replace query"
-          }
-        },
-        "required": ["action"]
-      }
+  "templates": {
+    "list": {
+      "en": [
+        "List all {target}",
+        "Show me {target}",
+        "What {target} do I have?",
+        "Display all {target}",
+        "Show all {target}"
+      ]
+    },
+    "read": {
+      "en": [
+        "Read {target}",
+        "Open {target}",
+        "Show me {target}",
+        "View {target}",
+        "Display {target}"
+      ]
+    },
+    "save": {
+      "en": [
+        "Save {target}: {payload}",
+        "Create note {target} with {payload}",
+        "Write {target}: {payload}",
+        "Store {target}: {payload}",
+        "Save to {target}: {payload}"
+      ]
+    },
+    "append": {
+      "en": [
+        "Append to {target}: {payload}",
+        "Add to {target}: {payload}",
+        "Add more to {target}: {payload}",
+        "Update {target} with {payload}",
+        "Insert into {target}: {payload}"
+      ]
+    },
+    "delete": {
+      "en": [
+        "Delete {target}",
+        "Remove {target}",
+        "Clear {target}",
+        "Erase {target}",
+        "Get rid of {target}"
+      ]
+    },
+    "change": {
+      "en": [
+        "In {target}: {payload}",
+        "Change {target}: {payload}",
+        "Update {target}: {payload}",
+        "Modify {target}: {payload}"
+      ]
+    },
+    "rename": {
+      "en": [
+        "Rename {target} to {payload}",
+        "Change {target} name to {payload}",
+        "Rename {target} as {payload}"
+      ]
+    },
+    "search": {
+      "en": [
+        "Search for {payload}",
+        "Find {payload}",
+        "Look up {payload}",
+        "Search {target} for {payload}",
+        "Find {payload} in {target}"
+      ]
     }
+  },
+  "payload_examples": {
+    "groceries": [
+      "Milk, eggs, bread",
+      "Rice, lentils, oil",
+      "Apples, bananas, yogurt",
+      "Coffee, sugar, cream"
+    ],
+    "translation": [
+      "Bonjour le monde",
+      "Hello world",
+      "Hola mundo",
+      "Guten Tag"
+    ],
+    "time_check": [
+      "Current time: 14:30",
+      "Time is 09:15",
+      "It's 18:45 now"
+    ],
+    "meeting_notes": [
+      "Discuss Q1 goals",
+      "Project review on Friday",
+      "Budget planning next week"
+    ],
+    "todo": [
+      "Buy groceries, call dentist",
+      "Finish report, email team",
+      "Book flight, pack luggage"
+    ],
+    "meeting_minutes": [
+      "Decided to launch in March",
+      "Action items: Sarah owns QA",
+      "Budget approved for Q2"
+    ],
+    "daily_log": [
+      "Worked on feature X",
+      "Fixed bug in login",
+      "Reviewed PR #42"
+    ]
   }
 }

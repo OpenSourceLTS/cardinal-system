@@ -1,4 +1,4 @@
-# Cardinal System v0.0.1
+# Cardinal System v0.0.2-alpha
 
 A lightweight AI assistant framework built on **Cognitive Offloading** — all logic lives in a deterministic Python engine while a small local LLM (via [LM Studio](https://lmstudio.ai/)) acts solely as a natural-language-to-tool-call transducer.
 
@@ -18,6 +18,7 @@ A lightweight AI assistant framework built on **Cognitive Offloading** — all l
   - [Settings](#settings-tool)
   - [LibreTranslate](#libretranslate-tool)
 - [Web UI](#web-ui)
+- [Training Data Pipeline](#training-data-pipeline)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Install](#install)
@@ -49,20 +50,21 @@ Cardinal offloads 100% of the logic to a deterministic Python engine. The LLM is
 
 ### Execution Lifecycle
 
-Cardinal uses LM Studio's native API with MCP (Model Context Protocol) integration:
+Cardinal uses a **two-LLM architecture** optimized for small models:
+
+1. **Function LLM** (`functiongemma-270m-it`) — stateless dispatcher, receives no conversation history. Decides whether to call a tool or forward to the conversational model.
+2. **Forward LLM** (`qwen3-0.6b`) — receives full conversation context for open-ended chat.
 
 ```
 User Message
     ↓
-LM Studio (/api/v1/chat + integrations: ["mcp/cardinal-system"])
+Function LLM (stateless, via LM Studio native API)
     ↓
-LLM decides: call tool or respond directly
-    ↓
-MCP Tool Execution (core/mcp_server.py routes to tool handler)
-    ↓
-Result injected back into LLM context (single pass)
-    ↓
-Final Response
+Tool call? ──yes──→ Engine executes tool → result
+    │                       ↓
+    no                  Forward LLM (with history)
+    │                       ↓
+    └────────────────── Final Response
 ```
 
 ### Command Grammar
@@ -112,14 +114,25 @@ cardinalsystem/
 │   ├── clock_and_calendar/     # Time, date, moon, calendars, alarms, timers
 │   ├── notes/                  # Persistent markdown notes
 │   ├── settings/               # User preferences
-│   └── libretranslate/         # Self-hosted translation (argos-translate)
+│   ├── libretranslate/         # Self-hosted translation (argos-translate)
+│   └── llm/                    # Forwards to main conversational AI model
+├── train-finetune/             # Training data & fine-tuning pipeline
+│   ├── train/
+│   │   ├── generate_training_data.py  # Generates FunctionGemma training JSONL
+│   │   ├── combine.py                 # Extracts training data from manifests
+│   │   ├── templates.json             # User prompt templates (generated)
+│   │   ├── payload_examples.json      # Payload values (generated)
+│   │   ├── multi_tool_config.json     # Multi-call scenarios (generated)
+│   │   └── training_data.jsonl        # Final training records (generated)
+│   └── finetune/
+│       └── colab_finetune.ipynb       # Colab notebook for fine-tuning
 ├── memory/                     # Persistent data storage
 │   ├── clock_and_calendar.json # Timezone, alarms, timers, events
 │   ├── notes/                  # Markdown note files
 │   ├── history/                # Session conversation history
 │   └── settings.md             # User preferences
-└── docs/
-    └── docs.md                 # Full developer documentation
+├── docs/
+│   └── docs.md                 # Full developer documentation
 ```
 
 ---
@@ -177,6 +190,13 @@ detect()|"Bonjour le monde"         → detect language (returns "fr (French)")
 list()@languages|""                 → list all 50 supported languages
 ```
 
+### LLM Tool
+
+**Verbs:** `forward`
+**Risk Tier:** NETWORK
+
+Routes user input to the main conversational AI model for open-ended questions and instructions that don't fit other tools. Reads session history from `memory/current_session` and prepends it as context to the forward LLM payload.
+
 ---
 
 ## Web UI
@@ -204,6 +224,31 @@ SvelteKit frontend with a two-panel layout:
 | shadcn-svelte     | Copy-paste components            |
 | Flowbite Svelte   | Tailwind component library       |
 | Svelte Gantt      | Gantt chart component            |
+
+---
+
+## Training Data Pipeline
+
+Each tool's `manifest.json` owns its training data (`templates`, `payload_examples`, and for `llm` also `multi_tool`). `combine.py` aggregates manifests into config files, then `generate_training_data.py` produces FunctionGemma-format records for fine-tuning.
+
+```
+tools/*/manifest.json     ← templates + payload_examples per tool
+        │
+        ▼
+python combine.py         ← merges → templates.json, payload_examples.json, multi_tool_config.json
+        │
+        ▼
+python generate_training_data.py  ← builds → training_data.jsonl (381 records English-only)
+        │
+        ▼
+colab_finetune.ipynb      ← fine-tunes functiongemma-270m-it on T4 GPU
+```
+
+**To add a language**, add `"fr": [...]` entries to each manifest's templates + multi_tool, then:
+
+```bash
+python generate_training_data.py --lang en,fr
+```
 
 ---
 
@@ -402,7 +447,7 @@ Place business logic in `scripts/` modules. Each handler receives parsed command
     "actions": ["get", "set"],
     "manifest": {
         "example": { "action": "get", "target": "info", "payload": "" },
-        "v@p": {
+        "a@p": {
             "get": [["target", "payload"]],
             "set": [["target", "payload"]]
         }
@@ -417,7 +462,7 @@ No manual registration needed. `core/mcp_server.py` auto-discovered all tools. J
 - Directory is `tools/{name}/`
 - Python file is `tools/{name}/{name}_tool.py`
 - Class name is PascalCase (e.g., `weather` → `WeatherTool`)
-- `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.v@p`
+- `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.a@p`
 
 ---
 

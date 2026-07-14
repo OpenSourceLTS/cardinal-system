@@ -2,50 +2,140 @@
   "name": "libretranslate",
   "description": "Self-hosted machine translation using LibreTranslate/Argos. Translate between 50+ languages. Auto-downloads models on first use. Supports detecting language of any text. Available language codes: ar (Arabic), az (Azerbaijani), bg (Bulgarian), bn (Bengali), ca (Catalan), cs (Czech), da (Danish), de (German), el (Greek), en (English), eo (Esperanto), es (Spanish), et (Estonian), eu (Basque), fa (Persian), fi (Finnish), fr (French), ga (Irish), gl (Galician), he (Hebrew), hi (Hindi), hu (Hungarian), id (Indonesian), it (Italian), ja (Japanese), ko (Korean), ky (Kyrgyz), lt (Lithuanian), lv (Latvian), ms (Malay), nb (Norwegian Bokmål), nl (Dutch), pb (Pushto), pl (Polish), pt (Portuguese), ro (Romanian), ru (Russian), sk (Slovak), sl (Slovenian), sq (Albanian), sv (Swedish), sw (Swahili), th (Thai), tl (Tagalog), tr (Turkish), uk (Ukrainian), ur (Urdu), vi (Vietnamese), zh (Chinese Simplified), zt (Chinese Traditional).",
   "risk_tier": "NETWORK",
-  "actions": ["translate", "detect", "list"],
+  "actions": [
+    "translate",
+    "detect",
+    "list"
+  ],
   "target_hint": "language_code (e.g. bn, fr, ja) for translate; leave empty for detect; 'languages' or 'installed' for list",
   "payload_hint": "text | source_lang (translate); text to detect (detect)",
   "manifest": {
     "example": {
-      "verb": "detect",
+      "action": "detect",
       "target": "",
       "payload": "Bonjour le monde"
     },
-    "v@p": {
+    "a@p": {
       "translate": [
-        ["language_code", "text | source_lang (source optional, defaults to en)"]
+        [
+          "language_code",
+          "text | source_lang (source optional, defaults to en)"
+        ]
       ],
       "detect": [
-        ["", "text to detect language of"]
+        [
+          "",
+          "text to detect language of"
+        ]
       ],
       "list": [
-        ["languages", ""],
-        ["installed", ""]
+        [
+          "languages",
+          ""
+        ],
+        [
+          "installed",
+          ""
+        ]
       ]
     }
   },
-  "schema": {
-    "function": {
-      "name": "libretranslate",
-      "description": "Self-hosted machine translation using LibreTranslate/Argos. Translate between 50+ languages. Supports detecting language of any text.",
-      "parameters": {
-        "type": "OBJECT",
-        "properties": {
-          "action": {
-            "type": "STRING",
-            "description": "Action verb. One of: translate, detect, list"
-          },
-          "target": {
-            "type": "STRING",
-            "description": "Language code for translate; empty for detect; 'languages' or 'installed' for list"
-          },
-          "payload": {
-            "type": "STRING",
-            "description": "Text to translate or detect language of"
-          }
-        },
-        "required": ["action"]
-      }
+  "templates": {
+    "translate": {
+      "en": [
+        "Translate to {target}: {payload}",
+        "What is {payload} in {target}?",
+        "Translate {payload} into {target}"
+      ]
+    },
+    "detect": {
+      "en": [
+        "What language is this: {payload}",
+        "Detect the language: {payload}",
+        "Identify the language of: {payload}"
+      ]
+    },
+    "list": {
+      "en": [
+        "List all {target}",
+        "Show me {target}",
+        "What {target} do I have?",
+        "Display all {target}",
+        "Show all {target}"
+      ]
     }
+  },
+  "payload_examples": {
+    "en": [
+      "Hello world | auto"
+    ],
+    "bn": [
+      "Bonjour le monde | auto"
+    ],
+    "fr": [
+      "Hello world | en"
+    ],
+    "ar": [
+      "Hello world | en"
+    ],
+    "es": [
+      "Hello world | en"
+    ],
+    "de": [
+      "Hello world | en"
+    ],
+    "ja": [
+      "Hello world | en"
+    ],
+    "ko": [
+      "Hello world | en"
+    ],
+    "zh": [
+      "Hello world | en"
+    ],
+    "hi": [
+      "Hello world | en"
+    ],
+    "pt": [
+      "Hello world | en"
+    ],
+    "ru": [
+      "Hello world | en"
+    ],
+    "it": [
+      "Hello world | en"
+    ],
+    "tr": [
+      "Hello world | en"
+    ],
+    "id": [
+      "Hello world | en"
+    ],
+    "th": [
+      "Hello world | en"
+    ],
+    "vi": [
+      "Hello world | en"
+    ],
+    "pl": [
+      "Hello world | en"
+    ],
+    "nl": [
+      "Hello world | en"
+    ],
+    "sv": [
+      "Hello world | en"
+    ],
+    "fa": [
+      "Hello world | en"
+    ],
+    "ur": [
+      "Hello world | en"
+    ],
+    "": [
+      "Hello world",
+      "Bonjour le monde",
+      "Hola mundo"
+    ]
   }
 }

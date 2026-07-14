@@ -1,4 +1,4 @@
-# Cardinal System v0.0.1 — Developer Documentation
+# Cardinal System v0.0.2-alpha — Developer Documentation
 
 Welcome to the Cardinal System. This documentation covers the architectural philosophy, execution engine, complete tool reference, API reference, and SDK tool creation guide.
 
@@ -15,6 +15,12 @@ Welcome to the Cardinal System. This documentation covers the architectural phil
 - [Part 7: Running](#part-7-running)
 - [Part 8: SDK Tool Creation Guide](#part-8-sdk-tool-creation-guide)
 - [Part 9: Full SDK Example](#part-9-full-sdk-example)
+- [Part 10: Training Data Pipeline](#part-10-training-data-pipeline)
+  - [10.1 Data Ownership](#101-data-ownership)
+  - [10.2 Pipeline](#102-pipeline)
+  - [10.3 Record Generation](#103-record-generation)
+  - [10.4 Adding a New Language](#104-adding-a-new-language)
+  - [10.5 Fine-Tuning](#105-fine-tuning)
 
 ---
 
@@ -121,7 +127,18 @@ cardinalsystem/
 │   ├── clock_and_calendar/     # Time, date, moon, calendars, alarms, timers
 │   ├── notes/                  # Persistent markdown notes with line editing
 │   ├── settings/               # User preferences
-│   └── libretranslate/         # Self-hosted translation (argos-translate)
+│   ├── libretranslate/         # Self-hosted translation (argos-translate)
+│   └── llm/                    # Forwards user input to the main AI model
+├── train-finetune/             # Training data & fine-tuning pipeline
+│   ├── train/
+│   │   ├── generate_training_data.py  # Generates FunctionGemma training JSONL
+│   │   ├── combine.py                 # Extracts training data from manifests → config files
+│   │   ├── templates.json             # User prompt templates per action (generated)
+│   │   ├── payload_examples.json      # Example payload values per tool (generated)
+│   │   ├── multi_tool_config.json     # Multi-call scenarios (generated)
+│   │   └── training_data.jsonl        # Final training records (generated)
+│   └── finetune/
+│       └── colab_finetune.ipynb       # Colab notebook for FunctionGemma fine-tuning
 ├── memory/                     # Persistent data storage
 │   ├── clock_and_calendar.json # Timezone, alarms, timers, stopwatch, events
 │   ├── notes/                  # Markdown note files (.md)
@@ -205,7 +222,7 @@ Routes tool calls through a 6-step validation pipeline:
 
 1. **Tool exists** — checks `self._tools` registry
 2. **Verb valid** — checks against the tool's `manifest.actions`
-3. **Target valid** — checks against `v@p` map (when targets are literal strings)
+3. **Target valid** — checks against `a@p` map (when targets are literal strings)
 4. **Payload valid** — resolved via `$ref` placeholders
 5. **Confirmation** — required for flagged commands
 6. **Execute** — calls `tool.execute()`
@@ -482,6 +499,26 @@ translate(en)@"Bonjour | fr"       → translate French to English
 detect()|"Bonjour le monde"         → detect language (returns "fr (French)")
 list()@languages|""                 → list all supported languages
 ```
+
+---
+
+### 4.5 LLMTool (`tools/llm/`)
+
+Routes user input to the main conversational AI model. Used for open-ended questions, instructions, and complex queries that don't fit other tools.
+
+| Field | Value |
+|---|---|
+| Tool name | `llm` |
+| Verbs | `forward` |
+| Risk Tier | NETWORK |
+
+**Verb reference:**
+
+| Verb | Target | Payload | Description |
+|------|--------|---------|-------------|
+| `forward` | `ai` | user message | Forwards text to the primary LLM with full conversation history |
+
+**How it works:** The function-calling LLM (FunctionGemma) decides when a query needs the forward LLM's broader capabilities. `handle_forward()` in `tools/llm/scripts/handlers.py` reads the current `session_id` from `memory/current_session`, loads conversation history via `core/history.load()`, and injects it as context to the forward LLM API call.
 
 ---
 
@@ -830,7 +867,7 @@ def handle_set(target, payload, metadata, ctx):
     "payload_hint": "value to set",
     "manifest": {
         "example": { "action": "get", "target": "greeting", "payload": "" },
-        "v@p": {
+        "a@p": {
             "get": [["greeting", ""]],
             "set": [["setting_name", "value"]]
         }
@@ -845,8 +882,11 @@ def handle_set(target, payload, metadata, ctx):
 - `actions` — list of supported action verbs
 - `target_hint` / `payload_hint` — human-readable hints
 - `manifest.example` — example action/target/payload for the AI
-- `manifest.v@p` — action → [[target, payload_format]] mapping for validation
+- `manifest.a@p` — action → [[target, payload_format]] mapping for validation
 - `manifest.examples` — array of examples (alternative to single `example`)
+- `templates` — user prompt templates per action, keyed by language code (e.g. `"en": ["What is the {target}?"]`)
+- `payload_examples` — example payload values for `{payload}` substitution, keyed by target
+- `multi_tool` — (llm only) multi-call scenarios: `parallel`, `sequential`, `triple`, `llm_sequential`, `llm_parallel`, `irrelevant`
 
 ### Step 5: Registration
 
@@ -855,7 +895,7 @@ No manual registration needed. `core/mcp_server.py` auto-discovers all tools. Ju
 1. Directory is `tools/{name}/`
 2. Python file is `tools/{name}/{name}_tool.py`
 3. Class name is PascalCase of the tool name (e.g., `weather` → `WeatherTool`)
-4. `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.v@p`
+4. `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.a@p`
 5. The class inherits from `BaseTool`
 
 Discovery flow:
@@ -918,11 +958,141 @@ def handle_get(city, unit, metadata, ctx):
     "payload_hint": "unit (celsius or fahrenheit)",
     "manifest": {
         "example": { "action": "get", "target": "London", "payload": "celsius" },
-        "v@p": {
+        "a@p": {
             "get": [["city_name", "celsius|fahrenheit"]]
         }
+    },
+    "templates": {
+        "get": {
+            "en": [
+                "What's the weather in {target}?",
+                "Weather for {target}",
+                "How's the weather in {target}?"
+            ]
+        }
+    },
+    "payload_examples": {
+        "city_name": ["London", "Tokyo", "New York", "Dhaka"],
+        "celsius|fahrenheit": ["celsius", "fahrenheit"]
     }
 }
 ```
 
 No registration needed — tools are auto-discovered from `tools/*/manifest.json` by `core/mcp_server.py` using `load_tool_class()`.
+
+---
+
+## Part 10: Training Data Pipeline
+
+Cardinal generates FunctionGemma-format training data for fine-tuning the function-calling model (`functiongemma-270m-it`). The data lives in each tool's **own manifest** and is aggregated by `combine.py`.
+
+### 10.1 Data Ownership
+
+Each `tools/*/manifest.json` contains three training-specific fields:
+
+| Field | Scope | Description |
+|---|---|---|
+| `templates` | Per action | User prompt templates with `{target}` and `{payload}` placeholders |
+| `payload_examples` | Per target | Example values for `{payload}` substitution |
+| `multi_tool` | llm only | Multi-call scenarios (parallel, sequential, triple) + irrelevant queries |
+
+**Example** (`tools/clock_and_calendar/manifest.json`):
+```json
+{
+  "templates": {
+    "get": {
+      "en": ["What is the {target}?", "Tell me the {target}", "Show me {target}"]
+    },
+    "set": {
+      "en": ["Set {target} to {payload}", "Create {target}: {payload}"]
+    }
+  },
+  "payload_examples": {
+    "timezone": ["Asia/Dhaka", "America/New_York"],
+    "alarm": ["07:00", "08:30"]
+  }
+}
+```
+
+Multi-tool scenarios live only in `tools/llm/manifest.json` since `llm` is the orchestrator:
+
+```json
+{
+  "multi_tool": {
+    "parallel": [
+      {
+        "tools": [
+          "clock_calendar", {"action": "get", "target": "time"},
+          "settings", {"action": "get", "target": "timezone"},
+          {"en": "What time is it and what's my timezone?"}
+        ]
+      }
+    ],
+    "sequential": [...],
+    "triple": [...],
+    "irrelevant": [...]
+  }
+}
+```
+
+### 10.2 Pipeline
+
+```
+tools/*/manifest.json      ← Each tool owns its training data
+        │
+        ▼
+python combine.py          ← Aggregates all manifests into config files
+        │
+        ▼
+train-finetune/train/
+  ├── templates.json        (merged from all manifests)
+  ├── payload_examples.json (merged from all manifests)
+  └── multi_tool_config.json (from llm manifest)
+        │
+        ▼
+python generate_training_data.py  ← Reads config files + manifests → builds records
+        │
+        ▼
+train-finetune/train/
+  ├── training_data.csv     (intermediate: text, tool_name, call_str)
+  └── training_data.jsonl   (final: FunctionGemma-format conversation records)
+```
+
+`generate_training_data.py` auto-calls `combine.py` internally, so a single command regenerates everything:
+
+```bash
+python generate_training_data.py --lang en          # English only
+python generate_training_data.py --lang en,fr,de    # Multi-language
+python generate_training_data.py --templates 3      # Limit templates per combo
+```
+
+### 10.3 Record Generation
+
+For each tool, `generate_training_data.py`:
+
+1. Iterates over `a@p` entries (action → [target, payload_format] pairs)
+2. For each language, picks user prompt templates from `templates.json`
+3. Substitutes `{target}` and `{payload}` with actual values from `payload_examples.json`
+4. Calls `map_params()` to map generic payloads to tool-specific parameter names
+5. Builds a FunctionGemma-format `<start_function_call>call:tool{...}<end_function_call>` string
+
+Multi-tool records are built from `multi_tool_config.json` entries, combining tools in parallel, sequential, or triple patterns. Irrelevant records contain plain-text Q&A pairs with no tool calls.
+
+### 10.4 Adding a New Language
+
+1. Add `"lang_code": [...]` arrays to each tool's `templates` field in its manifest
+2. Add language-keyed phrases to `multi_tool` entries in `llm/manifest.json`
+3. Regenerate:
+
+```bash
+python generate_training_data.py --lang en,fr,de,ja
+```
+
+### 10.5 Fine-Tuning
+
+The generated `training_data.jsonl` feeds into `train-finetune/finetune/colab_finetune.ipynb`:
+
+1. Upload `training_data.jsonl` to Google Colab (T4 GPU)
+2. Notebook loads `google/functiongemma-270m-it`, applies SFT with proper `<start_of_turn>` / `<end_of_turn>` chat markers
+3. Fine-tuned model saves locally and can be uploaded to Hugging Face
+4. Load the fine-tuned model in LM Studio for inference

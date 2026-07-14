@@ -1,8 +1,6 @@
 """Training Data Generator for FunctionGemma Fine-Tuning.
 
-Reads manifests and config files to generate:
-1. training_data.csv -- Single tool calls for Tuning Lab (3 cols, no header)
-2. training_data.jsonl -- Single + multi tool calls (standard FunctionGemma format)
+Generates training_data.jsonl in native FunctionGemma format.
 
 Usage:
     python generate_training_data.py
@@ -11,11 +9,10 @@ Usage:
 """
 
 import argparse
-import csv
 import json
 import random
+import re
 import sys
-from datetime import datetime
 from pathlib import Path
 
 LANGUAGES = [
@@ -30,7 +27,6 @@ LANGUAGES = [
     ("ta", "Tamil"), ("te", "Telugu"), ("th", "Thai"),
     ("tr", "Turkish"), ("ur", "Urdu"), ("vi", "Vietnamese"),
 ]
-DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def load_json(path: Path) -> dict:
@@ -42,13 +38,12 @@ def load_manifests(manifests_dir: Path) -> list:
     manifests = []
     for manifest_path in sorted(manifests_dir.glob("*/manifest.json")):
         data = load_json(manifest_path)
-        vp = data.get("manifest", {}).get("v@p", {})
+        vp = data.get("manifest", {}).get("a@p", {})
         manifests.append({
             "name": data.get("name", manifest_path.parent.stem),
             "description": data.get("description", ""),
             "actions": data.get("actions", []),
-            "v@p": vp,
-            "schema": data.get("schema"),
+            "a@p": vp,
         })
     return manifests
 
@@ -61,17 +56,6 @@ def filter_languages(lang_filter: str) -> list:
     return [(c, lang_map.get(c, c)) for c in codes if c]
 
 
-def random_datestr() -> tuple:
-    year = random.randint(2024, 2026)
-    month = random.randint(1, 12)
-    day = random.randint(1, 28)
-    hour = random.randint(0, 23)
-    minute = random.randint(0, 59)
-    second = random.randint(0, 59)
-    dt = datetime(year, month, day, hour, minute, second)
-    return dt.strftime("%Y-%m-%dT%H:%M:%S"), DAYS[dt.weekday()]
-
-
 def resolve_payload(examples: dict, tool_name: str, target: str, default: str = "value") -> str:
     val = examples.get(tool_name, {}).get(target, default)
     if isinstance(val, list):
@@ -79,25 +63,81 @@ def resolve_payload(examples: dict, tool_name: str, target: str, default: str = 
     return val
 
 
-def generate_csv(
+# ── FunctionGemma format builders ──────────────────────────────────────────
+
+def escape(val: str) -> str:
+    return f"<escape>{val}<escape>"
+
+
+def build_tools_schema(manifests: list) -> list:
+    tools = []
+    for m in manifests:
+        actions = m["actions"]
+        tools.append({
+            "type": "function",
+            "function": {
+                "name": m["name"],
+                "description": m.get("description", ""),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "enum": actions,
+                            "description": f"Action verb. One of: {', '.join(actions)}"
+                        },
+                        "target": {"type": "string", "description": "Target resource"},
+                        "payload": {"type": "string", "description": "Payload data"}
+                    },
+                    "required": ["action"]
+                }
+            }
+        })
+    return tools
+
+
+def build_call_str(tool_name: str, args: dict) -> str:
+    param_parts = []
+    for key, value in args.items():
+        if value is not None and value != "":
+            param_parts.append(f"{key}:{escape(value)}")
+    return f"<start_function_call>call:{tool_name}{{{','.join(param_parts)}}}<end_function_call>"
+
+
+# ── Parameter mapping ──────────────────────────────────────────────────────
+# All tools use the same 3-param schema: action, target, payload.
+# The a@p entry provides target and payload_format; payload_val comes from examples.
+
+def map_params(tool_name: str, action: str, target: str, payload_val: str, payload_format: str) -> dict:
+    params = {"action": action, "target": target}
+    if payload_val and payload_val.strip() and payload_val != "value":
+        params["payload"] = payload_val
+    return params
+
+
+# ── CSV generator ──────────────────────────────────────────────────────────
+
+def generate_single_records(
     manifests: list,
     templates: dict,
     payload_examples: dict,
     languages: list,
     max_templates: int,
-) -> tuple:
+) -> list:
+    """Generate single-tool-call records: list of [user_text, tool_name, args_dict]."""
     rows = []
     warnings = 0
 
     for manifest in manifests:
         tool_name = manifest["name"]
-        vp = manifest["v@p"]
+        vp = manifest["a@p"]
 
         for action, targets in vp.items():
             action_templates = templates.get(action, templates.get("get", {}))
 
             for target_entry in targets:
                 target = target_entry[0] if target_entry else ""
+                payload_format = target_entry[1] if len(target_entry) > 1 else ""
 
                 for lang_code, _ in languages:
                     tmpls = action_templates.get(lang_code, action_templates.get("en", []))
@@ -113,57 +153,49 @@ def generate_csv(
                             pl = resolve_payload(payload_examples, tool_name, target, "value")
                             text = text.replace("{payload}", pl)
 
-                        tool_args = {"action": action}
-                        if target:
-                            tool_args["target"] = target
                         pl = resolve_payload(payload_examples, tool_name, target)
-                        if pl:
-                            tool_args["payload"] = pl
-
-                        rows.append([text, tool_name, json.dumps(tool_args, ensure_ascii=False)])
+                        args = map_params(tool_name, action, target, pl, payload_format)
+                        rows.append([text, tool_name, args])
 
     if warnings:
         print(f"  Warnings: {warnings} missing language templates (fell back to en)")
+    return rows
 
-    return len(rows), rows
+
+# ── JSONL generator ────────────────────────────────────────────────────────
+
+DEVELOPER_CONTENT = (
+    "You are Cardinal, an AI assistant with tools.\n"
+    "Directives:\n"
+    "- Use tool calls to fetch dynamic information or perform state changes.\n"
+    "- Never answer from internal knowledge. Base responses on tool outputs.\n"
+    "- For conversation or complex reasoning, forward to the 'llm' tool."
+)
 
 
 def generate_jsonl(
     manifests: list,
-    csv_rows: list,
+    single_rows: list,
     languages: list,
     multi_config: dict,
 ) -> list:
-    tool_schemas = [m["schema"] for m in manifests]
+    tools_schema = build_tools_schema(manifests)
     records = []
     lang_codes = [lc for lc, _ in languages]
 
     def add_record(phrase: str, calls: list):
-        dt_str, day_str = random_datestr()
-        dev_msg = (
-            f"Current date and time given in YYYY-MM-DDTHH:MM:SS format: {dt_str}\n"
-            f"Day of week is {day_str}\n"
-            "You are a model that can do function calling with the following functions\n"
-        )
+        call_contents = "\n".join(build_call_str(name, args) for name, args in calls)
         records.append({
-            "metadata": "train",
             "messages": [
-                {"role": "developer", "content": dev_msg, "tool_calls": None},
+                {"role": "developer", "content": DEVELOPER_CONTENT},
                 {"role": "user", "content": phrase},
-                {"role": "assistant", "content": None, "tool_calls": [
-                    {
-                        "id": f"call_{i+1}",
-                        "type": "function",
-                        "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)},
-                    }
-                    for i, (name, args) in enumerate(calls)
-                ]},
+                {"role": "assistant", "content": call_contents},
             ],
-            "tools": tool_schemas,
+            "tools": tools_schema,
         })
 
-    for text, tool_name, args_json in csv_rows:
-        add_record(text, [(tool_name, json.loads(args_json))])
+    for text, tool_name, args in single_rows:
+        add_record(text, [(tool_name, args)])
 
     for entry in multi_config.get("parallel", []):
         a, b, c, d, phrases = entry["tools"]
@@ -188,20 +220,13 @@ def generate_jsonl(
             response = responses.get(code, responses.get("en", ""))
             if not query or not response:
                 continue
-            dt_str, day_str = random_datestr()
-            dev_msg = (
-                f"Current date and time given in YYYY-MM-DDTHH:MM:SS format: {dt_str}\n"
-                f"Day of week is {day_str}\n"
-                "You are a model that can do function calling with the following functions\n"
-            )
             records.append({
-                "metadata": "train",
                 "messages": [
-                    {"role": "developer", "content": dev_msg, "tool_calls": None},
+                    {"role": "developer", "content": DEVELOPER_CONTENT},
                     {"role": "user", "content": query},
                     {"role": "assistant", "content": response},
                 ],
-                "tools": tool_schemas,
+                "tools": tools_schema,
             })
 
     for entry in multi_config.get("llm_sequential", []):
@@ -217,6 +242,8 @@ def generate_jsonl(
     random.shuffle(records)
     return records
 
+
+# ── CLI ────────────────────────────────────────────────────────────────────
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate FunctionGemma training data")
@@ -235,6 +262,10 @@ def main():
     manifests_dir = Path(args.manifests_dir) if args.manifests_dir else base.parent.parent / "tools"
     languages = filter_languages(args.lang)
 
+    # Step 0: Combine manifests into config files
+    from combine import combine as combine_tool
+    combine_tool(manifests_dir, out_dir)
+
     print(f"Loading manifests from {manifests_dir}...")
     manifests = load_manifests(manifests_dir)
     if not manifests:
@@ -242,26 +273,23 @@ def main():
     print(f"Tools: {[m['name'] for m in manifests]}")
     print(f"Languages: {len(languages)} ({', '.join(lc for lc, _ in languages)})")
 
-    templates = load_json(base / "templates.json")
+    templates = load_json(out_dir / "templates.json")
     print(f"Templates: {len(templates)} actions")
 
-    payload_examples = load_json(base / "payload_examples.json")
+    payload_examples = load_json(out_dir / "payload_examples.json")
 
-    csv_path = out_dir / "training_data.csv"
-    csv_count, csv_rows = generate_csv(manifests, templates, payload_examples, languages, args.templates)
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        csv.writer(f).writerows(csv_rows)
-    print(f"CSV: {csv_count} rows -> {csv_path}")
+    single_rows = generate_single_records(manifests, templates, payload_examples, languages, args.templates)
+    print(f"Single-call records: {len(single_rows)}")
 
-    multi_config = load_json(base / "multi_tool_config.json")
-    jsonl_records = generate_jsonl(manifests, csv_rows, languages, multi_config)
+    multi_config = load_json(out_dir / "multi_tool_config.json")
+    jsonl_records = generate_jsonl(manifests, single_rows, languages, multi_config)
     jsonl_path = out_dir / "training_data.jsonl"
     with open(jsonl_path, "w", encoding="utf-8") as f:
         for r in jsonl_records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     print(f"JSONL: {len(jsonl_records)} records -> {jsonl_path}")
 
-    print(f"\nDone! {csv_count} CSV rows, {len(jsonl_records)} JSONL records")
+    print(f"\nDone! {len(jsonl_records)} JSONL records")
 
 
 if __name__ == "__main__":

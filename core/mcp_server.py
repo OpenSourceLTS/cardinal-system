@@ -39,66 +39,36 @@ def _build_registry() -> Router:
 _ROUTER = _build_registry()
 
 
-# Builds a human-readable description string embedding the tool's manifest
-# so the AI can see valid verb/target/payload combinations.
-def _build_tool_description(manifest_data: dict) -> str:
-    manifest = manifest_data.get("manifest", {})
-    example = manifest.get("example", {})
-    vp = manifest.get("v@p", {})
-
-    desc = manifest_data.get("description", "")
-    risk = manifest_data.get("risk_tier", "SAFE")
-
-    lines = [
-        desc,
-        f"Risk: {risk}",
-        "Structured command fields:",
-        f"Example: {json.dumps(example, separators=(',', ':'))}",
-        "Valid combinations (verb -> [[target, payload_format], ...]):",
-        json.dumps(vp, separators=(',', ':')),
-    ]
-    return "\n".join(lines)
-
-
-# Builds one MCP tool definition per discovered tool for the tools/list response.
+# Builds minimal MCP tool definitions — model is fine-tuned and knows all tools.
+# All tools exposed so LM Studio can route calls.
 def _build_tool_definitions() -> list[dict]:
-    tools = discover_tools()
-    definitions = []
-    for data in tools:
-        name = data["name"]
-        actions = data["actions"]
-        description = _build_tool_description(data)
-
-        definitions.append({
-            "name": name,
-            "description": description,
+    defs = []
+    for data in discover_tools():
+        acts = data["actions"]
+        vp = data.get("manifest", {}).get("a@p", {})
+        tgts = []
+        for es in vp.values():
+            for e in es:
+                t = e[0] if e else ""
+                if t and t not in tgts:
+                    tgts.append(t)
+        target = {"type": "string"}
+        if tgts:
+            target["enum"] = tgts
+        defs.append({
+            "name": data["name"],
+            "description": ", ".join(acts),
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "verb": {
-                        "type": "string",
-                        "enum": actions,
-                        "description": f"Action verb. One of: {', '.join(actions)}"
-                    },
-                    "target": {
-                        "type": "string",
-                        "description": (
-                            "Resource target. Refer to the manifest above for valid targets "
-                            "per verb (e.g., current_time, alarm, days_between, list, read)."
-                        )
-                    },
-                    "payload": {
-                        "type": "string",
-                        "description": (
-                            "Payload data. Refer to the manifest for expected format. "
-                            "Use empty string or omit if no payload is needed."
-                        )
-                    }
+                    "action": {"type": "string", "enum": acts},
+                    "target": target,
+                    "payload": {"type": "string"}
                 },
-                "required": ["verb"]
+                "required": ["action"]
             }
         })
-    return definitions
+    return defs
 
 
 TOOL_DEFINITIONS = _build_tool_definitions()

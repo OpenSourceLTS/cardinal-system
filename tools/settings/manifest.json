@@ -2,73 +2,225 @@
   "name": "settings",
   "description": "User preferences and personalization settings for response style, tone, language, and behavior.",
   "risk_tier": "STATEFUL",
-  "actions": ["get", "set", "delete"],
+  "actions": [
+    "get",
+    "set",
+    "delete"
+  ],
   "target_hint": "preference name or 'list' for all preferences",
   "payload_hint": "preference value for set, or setting name for get/delete",
   "manifest": {
     "example": {
-      "verb": "set",
+      "action": "set",
       "target": "timezone",
       "payload": "Asia/Dhaka"
     },
-    "v@p": {
+    "a@p": {
       "get": [
-        ["setting", "setting_name"],
-        ["timezone", ""],
-        ["time_format", ""],
-        ["spoken_lang", ""],
-        ["llm_enabled", ""],
-        ["llm_provider", ""],
-        ["llm_model", ""],
-        ["llm_base_url", ""],
-        ["llm_api_key", ""],
-        ["fc_model", ""],
-        ["fc_base_url", ""],
-        ["fc_api_key", ""],
-        ["list", ""]
+        [
+          "setting",
+          "setting_name"
+        ],
+        [
+          "timezone",
+          ""
+        ],
+        [
+          "time_format",
+          ""
+        ],
+        [
+          "spoken_lang",
+          ""
+        ],
+        [
+          "llm_enabled",
+          ""
+        ],
+        [
+          "llm_provider",
+          ""
+        ],
+        [
+          "llm_model",
+          ""
+        ],
+        [
+          "llm_base_url",
+          ""
+        ],
+        [
+          "llm_api_key",
+          ""
+        ],
+        [
+          "fc_model",
+          ""
+        ],
+        [
+          "fc_base_url",
+          ""
+        ],
+        [
+          "fc_api_key",
+          ""
+        ],
+        [
+          "list",
+          ""
+        ]
       ],
       "set": [
-        ["setting", "setting_name|value"],
-        ["timezone", "continent/city | country | city | country/city | UTC+OFFSET | +OFFSET"],
-        ["time_format", "12h | 24h"],
-        ["spoken_lang", "language code (e.g. bn, fr, ja, de, es)"],
-        ["llm_enabled", "true | false"],
-        ["llm_provider", "openrouter | openai | lmstudio | custom"],
-        ["llm_api_key", "your API key"],
-        ["llm_model", "model name (e.g. openai/gpt-4o, google/gemma-3-270m-it)"],
-        ["llm_base_url", "custom base URL for API calls"],
-        ["llm_api_key", "API key for the forward LLM"],
-        ["fc_model", "model name for function-calling LLM (e.g. gemma-3-270m-it)"],
-        ["fc_base_url", "LM Studio URL for function-calling LLM (e.g. http://localhost:1234)"],
-        ["fc_api_key", "API key for function-calling LLM"]
+        [
+          "setting",
+          "setting_name|value"
+        ],
+        [
+          "timezone",
+          "continent/city | country | city | country/city | UTC+OFFSET | +OFFSET"
+        ],
+        [
+          "time_format",
+          "12h | 24h"
+        ],
+        [
+          "spoken_lang",
+          "language code (e.g. bn, fr, ja, de, es)"
+        ],
+        [
+          "llm_enabled",
+          "true | false"
+        ],
+        [
+          "llm_provider",
+          "openrouter | openai | lmstudio | custom"
+        ],
+        [
+          "llm_api_key",
+          "your API key"
+        ],
+        [
+          "llm_model",
+          "model name (e.g. openai/gpt-4o, google/gemma-3-270m-it)"
+        ],
+        [
+          "llm_base_url",
+          "custom base URL for API calls"
+        ],
+        [
+          "llm_api_key",
+          "API key for the forward LLM"
+        ],
+        [
+          "fc_model",
+          "model name for function-calling LLM (e.g. gemma-3-270m-it)"
+        ],
+        [
+          "fc_base_url",
+          "LM Studio URL for function-calling LLM (e.g. http://localhost:1234)"
+        ],
+        [
+          "fc_api_key",
+          "API key for function-calling LLM"
+        ]
       ],
       "delete": [
-        ["setting", "setting_name"]
+        [
+          "setting",
+          "setting_name"
+        ]
       ]
     }
   },
-  "schema": {
-    "function": {
-      "name": "settings",
-      "description": "User preferences and personalization settings for response style, tone, language, and behavior.",
-      "parameters": {
-        "type": "OBJECT",
-        "properties": {
-          "action": {
-            "type": "STRING",
-            "description": "Action verb. One of: get, set, delete"
-          },
-          "target": {
-            "type": "STRING",
-            "description": "Setting name: timezone, time_format, spoken_lang, llm_enabled, llm_provider, llm_api_key, llm_model, llm_base_url, fc_model, fc_base_url, fc_api_key, list"
-          },
-          "payload": {
-            "type": "STRING",
-            "description": "Value to set for set action; empty for get/delete"
-          }
-        },
-        "required": ["action"]
-      }
+  "templates": {
+    "get": {
+      "en": [
+        "What is the {target}?",
+        "Tell me the {target}",
+        "Show me {target}",
+        "Get the {target}",
+        "I need {target}",
+        "Can you tell me {target}?",
+        "Give me {target} info",
+        "What's the {target}?"
+      ]
+    },
+    "set": {
+      "en": [
+        "Set {target} to {payload}",
+        "Create {target}: {payload}",
+        "Add {target} {payload}",
+        "Schedule {target} {payload}",
+        "Update {target} to {payload}",
+        "Configure {target} as {payload}"
+      ]
+    },
+    "delete": {
+      "en": [
+        "Delete {target}",
+        "Remove {target}",
+        "Clear {target}",
+        "Erase {target}",
+        "Get rid of {target}"
+      ]
     }
+  },
+  "payload_examples": {
+    "timezone": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/Berlin",
+      "Asia/Tokyo",
+      "Australia/Sydney"
+    ],
+    "time_format": [
+      "24h",
+      "12h"
+    ],
+    "spoken_lang": [
+      "bn",
+      "en",
+      "es",
+      "fr",
+      "de",
+      "ja",
+      "ar"
+    ],
+    "llm_provider": [
+      "openrouter",
+      "openai",
+      "lmstudio",
+      "custom"
+    ],
+    "llm_model": [
+      "anthropic/claude-3-haiku",
+      "openai/gpt-4o",
+      "google/gemma-3-270m-it",
+      "meta-llama/llama-3-70b"
+    ],
+    "llm_api_key": [
+      "sk-llm-test",
+      ""
+    ],
+    "llm_enabled": [
+      "true",
+      "false"
+    ],
+    "llm_base_url": [
+      ""
+    ],
+    "fc_model": [
+      "gemma-3-270m-it",
+      "gemma-2-2b-it",
+      "lfm2.5-230m-fable-5"
+    ],
+    "fc_base_url": [
+      "http://localhost:1234",
+      "http://localhost:1235"
+    ],
+    "fc_api_key": [
+      "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK",
+      ""
+    ]
   }
 }

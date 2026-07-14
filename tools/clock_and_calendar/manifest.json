@@ -2,73 +2,272 @@
   "name": "clock_calendar",
   "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
   "risk_tier": "SAFE",
-  "actions": ["get", "set", "delete"],
+  "actions": [
+    "get",
+    "set",
+    "delete"
+  ],
   "target_hint": "time, date, moon, timezone, alarm, timer, event",
   "payload_hint": "value, date, time, or query",
   "manifest": {
     "example": {
-      "verb": "get",
-      "target": "day_of_week",
-      "payload": "today"
+      "action": "get",
+      "target": "time",
+      "payload": ""
     },
-    "v@p": {
+    "a@p": {
       "get": [
-        ["time", "tz (optional)"],
-        ["date", ""],
-        ["datetime", "tz (optional)"],
-        ["timezone", ""],
-        ["moon", "date (optional)"],
-        ["season", "date (optional)"],
-        ["sun", "rise/set date tz"],
-        ["alarms", ""],
-        ["timers", ""],
-        ["stopwatch", ""],
-        ["events", ""],
-        ["between", "d1 to d2 (days/weeks/months)"],
-        ["until", "time/date"],
-        ["since", "time/date"],
-        ["date_offset", "date +/-days"],
-        ["day_of_week", "date"],
-        ["is_leap_year", "year"],
-        ["timezone", "src to dst"],
-        ["time_format", "time to 12h/24h"],
-        ["calendar", "date to hijri"]
+        [
+          "time",
+          "tz (optional)"
+        ],
+        [
+          "date",
+          ""
+        ],
+        [
+          "datetime",
+          "tz (optional)"
+        ],
+        [
+          "timezone",
+          ""
+        ],
+        [
+          "moon",
+          "date (optional)"
+        ],
+        [
+          "season",
+          "date (optional)"
+        ],
+        [
+          "sun",
+          "rise/set date tz"
+        ],
+        [
+          "alarms",
+          ""
+        ],
+        [
+          "timers",
+          ""
+        ],
+        [
+          "stopwatch",
+          ""
+        ],
+        [
+          "events",
+          ""
+        ],
+        [
+          "between",
+          "d1 to d2 (days/weeks/months)"
+        ],
+        [
+          "until",
+          "time/date"
+        ],
+        [
+          "since",
+          "time/date"
+        ],
+        [
+          "date_offset",
+          "date +/-days"
+        ],
+        [
+          "day_of_week",
+          "date"
+        ],
+        [
+          "is_leap_year",
+          "year"
+        ],
+        [
+          "timezone",
+          "src to dst"
+        ],
+        [
+          "time_format",
+          "time to 12h/24h"
+        ],
+        [
+          "calendar",
+          "date to hijri"
+        ]
       ],
       "set": [
-        ["alarm", "time label"],
-        ["timer", "duration"],
-        ["stopwatch", "start/stop/reset"],
-        ["event", "desc date time"]
+        [
+          "alarm",
+          "time label"
+        ],
+        [
+          "timer",
+          "duration"
+        ],
+        [
+          "stopwatch",
+          "start/stop/reset"
+        ],
+        [
+          "event",
+          "desc date time"
+        ]
       ],
       "delete": [
-        ["alarm", "id"],
-        ["timer", "id"],
-        ["event", "id"]
+        [
+          "alarm",
+          "id"
+        ],
+        [
+          "timer",
+          "id"
+        ],
+        [
+          "event",
+          "id"
+        ]
       ]
     }
   },
-  "schema": {
-    "function": {
-      "name": "clock_calendar",
-      "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
-      "parameters": {
-        "type": "OBJECT",
-        "properties": {
-          "action": {
-            "type": "STRING",
-            "description": "Action verb. One of: get, set, delete"
-          },
-          "target": {
-            "type": "STRING",
-            "description": "Target resource: time, date, moon, timezone, alarm, timer, event, alarms, timers, stopwatch, events, between, until, since, date_offset, day_of_week, is_leap_year, time_format, calendar"
-          },
-          "payload": {
-            "type": "STRING",
-            "description": "Value, date, time, or query"
-          }
-        },
-        "required": ["action"]
-      }
+  "templates": {
+    "get": {
+      "en": [
+        "What is the {target}?",
+        "Tell me the {target}",
+        "Show me {target}",
+        "Get the {target}",
+        "I need {target}",
+        "Can you tell me {target}?",
+        "Give me {target} info",
+        "What's the {target}?"
+      ]
+    },
+    "set": {
+      "en": [
+        "Set {target} to {payload}",
+        "Create {target}: {payload}",
+        "Add {target} {payload}",
+        "Schedule {target} {payload}",
+        "Update {target} to {payload}",
+        "Configure {target} as {payload}"
+      ]
+    },
+    "delete": {
+      "en": [
+        "Delete {target}",
+        "Remove {target}",
+        "Clear {target}",
+        "Erase {target}",
+        "Get rid of {target}"
+      ]
     }
+  },
+  "payload_examples": {
+    "timezone": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/London",
+      "Asia/Tokyo",
+      "Australia/Sydney"
+    ],
+    "time": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/London"
+    ],
+    "datetime": [
+      "2025-01-15 14:30",
+      "2025-06-01 09:00",
+      "2025-12-25 18:00",
+      "2025-03-20 07:45"
+    ],
+    "date": [
+      "2025-01-15",
+      "2025-06-01",
+      "2025-12-25",
+      "2025-03-20"
+    ],
+    "moon": [
+      ""
+    ],
+    "season": [
+      ""
+    ],
+    "sun": [
+      ""
+    ],
+    "alarms": [
+      ""
+    ],
+    "timers": [
+      ""
+    ],
+    "stopwatch": [
+      ""
+    ],
+    "events": [
+      ""
+    ],
+    "between": [
+      "2025-01-10 | 2025-01-20",
+      "2025-03-01 | 2025-03-31",
+      "2024-06-15 | 2024-07-15"
+    ],
+    "until": [
+      "2025-12-31",
+      "2025-06-30",
+      "2026-01-01"
+    ],
+    "since": [
+      "2025-01-01",
+      "2024-06-01",
+      "2024-01-01"
+    ],
+    "date_offset": [
+      "+7 days",
+      "-3 days",
+      "+1 month",
+      "+2 weeks"
+    ],
+    "day_of_week": [
+      "2025-01-15",
+      "2025-06-01",
+      "2025-12-25"
+    ],
+    "is_leap_year": [
+      "2024",
+      "2025",
+      "2020"
+    ],
+    "time_format": [
+      "12h",
+      "24h"
+    ],
+    "calendar": [
+      ""
+    ],
+    "alarm": [
+      "07:00",
+      "08:30",
+      "06:00",
+      "12:00",
+      "18:30"
+    ],
+    "timer": [
+      "5 minutes",
+      "10 minutes",
+      "30 seconds",
+      "1 hour",
+      "15 minutes"
+    ],
+    "event": [
+      "meeting tomorrow at 3pm",
+      "lunch at 12:30",
+      "doctor appointment at 10am",
+      "team standup at 9am"
+    ]
   }
 }

@@ -134,14 +134,14 @@ def discover_tools() -> List[dict]:
     return tools
 
 
-# Extracts literal target values for a tool+verb from the v@p map.
+# Extracts literal target values for a tool+verb from the a@p map.
 # Returns empty list when the manifest uses descriptive placeholders
 # (like "filename", "keyword") — in that case skip validation.
 def get_valid_targets(tool_name: str, verb: str) -> List[str]:
     import re
     data = load_manifest(tool_name)
     manifest = data.get("manifest", {})
-    verb_map = manifest.get("v@p", {})
+    verb_map = manifest.get("a@p", {})
     entries = verb_map.get(verb, [])
     valid = []
     for entry in entries:

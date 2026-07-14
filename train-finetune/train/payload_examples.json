@@ -1,75 +1,181 @@
 {
   "clock_calendar": {
-    "timezone": ["Asia/Dhaka", "America/New_York", "Europe/London", "Asia/Tokyo", "Australia/Sydney"],
-    "time": ["Asia/Dhaka", "America/New_York", "Europe/London"],
-    "datetime": ["2025-01-15 14:30", "2025-06-01 09:00", "2025-12-25 18:00", "2025-03-20 07:45"],
-    "date": ["2025-01-15", "2025-06-01", "2025-12-25", "2025-03-20"],
-    "moon": [""],
-    "season": [""],
-    "sun": [""],
-    "alarms": [""],
-    "timers": [""],
-    "stopwatch": [""],
-    "events": [""],
-    "between": ["2025-01-10 | 2025-01-20", "2025-03-01 | 2025-03-31", "2024-06-15 | 2024-07-15"],
-    "until": ["2025-12-31", "2025-06-30", "2026-01-01"],
-    "since": ["2025-01-01", "2024-06-01", "2024-01-01"],
-    "date_offset": ["+7 days", "-3 days", "+1 month", "+2 weeks"],
-    "day_of_week": ["2025-01-15", "2025-06-01", "2025-12-25"],
-    "is_leap_year": ["2024", "2025", "2020"],
-    "time_format": ["12h", "24h"],
-    "calendar": [""],
-    "alarm": ["07:00", "08:30", "06:00", "12:00", "18:30"],
-    "timer": ["5 minutes", "10 minutes", "30 seconds", "1 hour", "15 minutes"],
-    "event": ["meeting tomorrow at 3pm", "lunch at 12:30", "doctor appointment at 10am", "team standup at 9am"]
-  },
-  "notes": {
-    "groceries": ["Milk, eggs, bread", "Rice, lentils, oil", "Apples, bananas, yogurt", "Coffee, sugar, cream"],
-    "translation": ["Bonjour le monde", "Hello world", "Hola mundo", "Guten Tag"],
-    "time_check": ["Current time: 14:30", "Time is 09:15", "It's 18:45 now"],
-    "meeting_notes": ["Discuss Q1 goals", "Project review on Friday", "Budget planning next week"],
-    "todo": ["Buy groceries, call dentist", "Finish report, email team", "Book flight, pack luggage"],
-    "meeting_minutes": ["Decided to launch in March", "Action items: Sarah owns QA", "Budget approved for Q2"],
-    "daily_log": ["Worked on feature X", "Fixed bug in login", "Reviewed PR #42"]
+    "timezone": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/London",
+      "Asia/Tokyo",
+      "Australia/Sydney"
+    ],
+    "time": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/London"
+    ],
+    "datetime": [
+      "2025-01-15 14:30",
+      "2025-06-01 09:00",
+      "2025-12-25 18:00",
+      "2025-03-20 07:45"
+    ],
+    "date": [
+      "2025-01-15",
+      "2025-06-01",
+      "2025-12-25",
+      "2025-03-20"
+    ],
+    "moon": [
+      ""
+    ],
+    "season": [
+      ""
+    ],
+    "sun": [
+      ""
+    ],
+    "alarms": [
+      ""
+    ],
+    "timers": [
+      ""
+    ],
+    "stopwatch": [
+      ""
+    ],
+    "events": [
+      ""
+    ],
+    "between": [
+      "2025-01-10 | 2025-01-20",
+      "2025-03-01 | 2025-03-31",
+      "2024-06-15 | 2024-07-15"
+    ],
+    "until": [
+      "2025-12-31",
+      "2025-06-30",
+      "2026-01-01"
+    ],
+    "since": [
+      "2025-01-01",
+      "2024-06-01",
+      "2024-01-01"
+    ],
+    "date_offset": [
+      "+7 days",
+      "-3 days",
+      "+1 month",
+      "+2 weeks"
+    ],
+    "day_of_week": [
+      "2025-01-15",
+      "2025-06-01",
+      "2025-12-25"
+    ],
+    "is_leap_year": [
+      "2024",
+      "2025",
+      "2020"
+    ],
+    "time_format": [
+      "12h",
+      "24h"
+    ],
+    "calendar": [
+      ""
+    ],
+    "alarm": [
+      "07:00",
+      "08:30",
+      "06:00",
+      "12:00",
+      "18:30"
+    ],
+    "timer": [
+      "5 minutes",
+      "10 minutes",
+      "30 seconds",
+      "1 hour",
+      "15 minutes"
+    ],
+    "event": [
+      "meeting tomorrow at 3pm",
+      "lunch at 12:30",
+      "doctor appointment at 10am",
+      "team standup at 9am"
+    ]
   },
   "libretranslate": {
-    "en": ["Hello world | auto"],
-    "bn": ["Bonjour le monde | auto"],
-    "fr": ["Hello world | en"],
-    "ar": ["Hello world | en"],
-    "es": ["Hello world | en"],
-    "de": ["Hello world | en"],
-    "ja": ["Hello world | en"],
-    "ko": ["Hello world | en"],
-    "zh": ["Hello world | en"],
-    "hi": ["Hello world | en"],
-    "pt": ["Hello world | en"],
-    "ru": ["Hello world | en"],
-    "it": ["Hello world | en"],
-    "tr": ["Hello world | en"],
-    "id": ["Hello world | en"],
-    "th": ["Hello world | en"],
-    "vi": ["Hello world | en"],
-    "pl": ["Hello world | en"],
-    "nl": ["Hello world | en"],
-    "sv": ["Hello world | en"],
-    "fa": ["Hello world | en"],
-    "ur": ["Hello world | en"],
-    "": ["Hello world", "Bonjour le monde", "Hola mundo"]
-  },
-  "settings": {
-    "timezone": ["Asia/Dhaka", "America/New_York", "Europe/Berlin", "Asia/Tokyo", "Australia/Sydney"],
-    "time_format": ["24h", "12h"],
-    "spoken_lang": ["bn", "en", "es", "fr", "de", "ja", "ar"],
-    "llm_provider": ["openrouter", "openai", "lmstudio", "custom"],
-    "llm_model": ["anthropic/claude-3-haiku", "openai/gpt-4o", "google/gemma-3-270m-it", "meta-llama/llama-3-70b"],
-    "llm_api_key": ["sk-or-xxx", "sk-test-123", ""],
-    "llm_enabled": ["true", "false"],
-    "llm_base_url": [""],
-    "llm_api_key": ["sk-llm-test", ""],
-    "fc_model": ["gemma-3-270m-it", "gemma-2-2b-it", "lfm2.5-230m-fable-5"],
-    "fc_base_url": ["http://localhost:1234", "http://localhost:1235"],
-    "fc_api_key": ["sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK", ""]
+    "en": [
+      "Hello world | auto"
+    ],
+    "bn": [
+      "Bonjour le monde | auto"
+    ],
+    "fr": [
+      "Hello world | en"
+    ],
+    "ar": [
+      "Hello world | en"
+    ],
+    "es": [
+      "Hello world | en"
+    ],
+    "de": [
+      "Hello world | en"
+    ],
+    "ja": [
+      "Hello world | en"
+    ],
+    "ko": [
+      "Hello world | en"
+    ],
+    "zh": [
+      "Hello world | en"
+    ],
+    "hi": [
+      "Hello world | en"
+    ],
+    "pt": [
+      "Hello world | en"
+    ],
+    "ru": [
+      "Hello world | en"
+    ],
+    "it": [
+      "Hello world | en"
+    ],
+    "tr": [
+      "Hello world | en"
+    ],
+    "id": [
+      "Hello world | en"
+    ],
+    "th": [
+      "Hello world | en"
+    ],
+    "vi": [
+      "Hello world | en"
+    ],
+    "pl": [
+      "Hello world | en"
+    ],
+    "nl": [
+      "Hello world | en"
+    ],
+    "sv": [
+      "Hello world | en"
+    ],
+    "fa": [
+      "Hello world | en"
+    ],
+    "ur": [
+      "Hello world | en"
+    ],
+    "": [
+      "Hello world",
+      "Bonjour le monde",
+      "Hola mundo"
+    ]
   },
   "llm": {
     "ai": [
@@ -83,6 +189,103 @@
       "what is machine learning",
       "give me advice on public speaking",
       "explain how photosynthesis works"
+    ]
+  },
+  "notes": {
+    "groceries": [
+      "Milk, eggs, bread",
+      "Rice, lentils, oil",
+      "Apples, bananas, yogurt",
+      "Coffee, sugar, cream"
+    ],
+    "translation": [
+      "Bonjour le monde",
+      "Hello world",
+      "Hola mundo",
+      "Guten Tag"
+    ],
+    "time_check": [
+      "Current time: 14:30",
+      "Time is 09:15",
+      "It's 18:45 now"
+    ],
+    "meeting_notes": [
+      "Discuss Q1 goals",
+      "Project review on Friday",
+      "Budget planning next week"
+    ],
+    "todo": [
+      "Buy groceries, call dentist",
+      "Finish report, email team",
+      "Book flight, pack luggage"
+    ],
+    "meeting_minutes": [
+      "Decided to launch in March",
+      "Action items: Sarah owns QA",
+      "Budget approved for Q2"
+    ],
+    "daily_log": [
+      "Worked on feature X",
+      "Fixed bug in login",
+      "Reviewed PR #42"
+    ]
+  },
+  "settings": {
+    "timezone": [
+      "Asia/Dhaka",
+      "America/New_York",
+      "Europe/Berlin",
+      "Asia/Tokyo",
+      "Australia/Sydney"
+    ],
+    "time_format": [
+      "24h",
+      "12h"
+    ],
+    "spoken_lang": [
+      "bn",
+      "en",
+      "es",
+      "fr",
+      "de",
+      "ja",
+      "ar"
+    ],
+    "llm_provider": [
+      "openrouter",
+      "openai",
+      "lmstudio",
+      "custom"
+    ],
+    "llm_model": [
+      "anthropic/claude-3-haiku",
+      "openai/gpt-4o",
+      "google/gemma-3-270m-it",
+      "meta-llama/llama-3-70b"
+    ],
+    "llm_api_key": [
+      "sk-llm-test",
+      ""
+    ],
+    "llm_enabled": [
+      "true",
+      "false"
+    ],
+    "llm_base_url": [
+      ""
+    ],
+    "fc_model": [
+      "gemma-3-270m-it",
+      "gemma-2-2b-it",
+      "lfm2.5-230m-fable-5"
+    ],
+    "fc_base_url": [
+      "http://localhost:1234",
+      "http://localhost:1235"
+    ],
+    "fc_api_key": [
+      "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK",
+      ""
     ]
   }
 }

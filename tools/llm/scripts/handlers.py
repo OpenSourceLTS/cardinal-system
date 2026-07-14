@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import requests
+from core import history
 from core.base_tool import CommandResult
 from core.engine import _get_forward_model, _get_forward_base_url, _get_forward_api_key
+
+_CURRENT_SESSION_FILE = Path(__file__).parent.parent.parent.parent / "memory" / "current_session"
 
 
 def handle_forward(target, payload, metadata, ctx):
@@ -13,6 +18,19 @@ def handle_forward(target, payload, metadata, ctx):
     base_url = _get_forward_base_url()
     api_key = _get_forward_api_key()
 
+    session_id = ""
+    if _CURRENT_SESSION_FILE.exists():
+        session_id = _CURRENT_SESSION_FILE.read_text(encoding="utf-8").strip()
+
+    context = ""
+    if session_id:
+        hist = history.load(session_id)
+        context = history.format_context(hist)
+
+    input_text = payload
+    if context:
+        input_text = f"{context}\n{payload}"
+
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {api_key}",
@@ -20,9 +38,8 @@ def handle_forward(target, payload, metadata, ctx):
 
     body = {
         "model": model,
-        "input": payload,
+        "input": input_text,
         "system_prompt": "You are a helpful AI assistant.",
-        "integrations": ["mcp/cardinal-system"],
         "context_length": 8192,
         "temperature": 0.7,
         "max_output_tokens": 1000,

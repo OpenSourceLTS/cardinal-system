@@ -37,7 +37,7 @@ class Router:
             return ""
         m = data.get("manifest", {})
         examples = m.get("examples") or ([m["example"]] if m.get("example") else [])
-        vp = m.get("v@p", {})
+        vp = m.get("a@p", {})
         lines = ["Correct format:"]
         for ex in examples:
             v = ex.get("verb", "")
