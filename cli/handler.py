@@ -105,7 +105,7 @@ def print_help():
     print(f"  {Colors.CYAN}/history{Colors.RESET}      Show last 20 exchanges")
     print(f"  {Colors.CYAN}/retry{Colors.RESET}        Re-run your last input")
     print(f"  {Colors.CYAN}/export{Colors.RESET}       Save conversation to file")
-    print(f"  {Colors.CYAN}/tools{Colors.RESET}        List registered tools and verbs")
+    print(f"  {Colors.CYAN}/tools{Colors.RESET}        List registered tools and actions")
     print(f"  {Colors.CYAN}/log{Colors.RESET}          Show session log path")
     print(f"  {Colors.CYAN}/url{Colors.RESET}          Show or change LM Studio URL")
     print(f"  {Colors.CYAN}/quit{Colors.RESET}         Exit")
@@ -204,6 +204,6 @@ def export_history(filepath="cardinal_export.txt"):
 def print_tools(router):
     print(f"  {Colors.DIM}Registered tools:{Colors.RESET}")
     for name, tool in router._tools.items():
-        verbs = ", ".join(tool.manifest.verbs)
+        actions = ", ".join(tool.manifest.actions)
         desc = tool.manifest.description
-        print(f"    {Colors.GREEN}{name}{Colors.RESET} [{verbs}] {Colors.DIM}{desc}{Colors.RESET}")
+        print(f"    {Colors.GREEN}{name}{Colors.RESET} [{actions}] {Colors.DIM}{desc}{Colors.RESET}")

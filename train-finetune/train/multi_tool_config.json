@@ -1,0 +1,258 @@
+{
+  "parallel": [
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "time"}, "settings", {"action": "get", "target": "timezone"}, {
+        "ar": "كم الساعة وما منطقة التوقيت الخاصة بي؟",
+        "bn": "এখন কতটা সময় এবং আমার টাইমজোন কি?",
+        "zh": "现在几点？我的时区是什么？",
+        "cs": "Kolik je hodin a jaké je má časové pásmo?",
+        "nl": "Hoe laat is het en wat is mijn tijdzone?",
+        "en": "What time is it and what's my timezone?",
+        "fr": "Quelle heure est-il et quel est mon fuseau horaire?",
+        "de": "Wie spät ist es und wie ist meine Zeitzone?",
+        "el": "Τι ώρα είναι και ποια είναι η ζώνη ώρας μου;",
+        "he": "מה השעה ומה אזור הזמן שלי?",
+        "hi": "अभी कितने बज रहे हैं और मेरा टाइमज़ोन क्या है?",
+        "hu": "Mennyi az idő és mi az időzónám?",
+        "id": "Jam berapa sekarang dan timezone saya apa?",
+        "it": "Che ora è e qual è il mio fuso orario?",
+        "ja": "今何時で、タイムゾーンは？",
+        "ko": "지금 몇 시이고 타임존은 뭐야?",
+        "mr": "आता किती वाजले आणि माझे टाईमझोन काय आहे?",
+        "fa": "الان چه ساعتی است و منطقه زمانی من چیست؟",
+        "pl": "Która godzina i jaka jest moja strefa czasowa?",
+        "pt": "Que horas são e qual é meu fuso horário?",
+        "ro": "Ce ora este și care este fusul meu orar?",
+        "ru": "Сколько времени и какой у меня часовой пояс?",
+        "es": "¿Qué hora es y cuál es mi zona horaria?",
+        "sw": "Sasa ni saa ngapi na eneo la wakati langu ni lipi?",
+        "ta": "இப்போது என்ன நேரம் என் நேர மண்டலம் என்ன?",
+        "te": "ఇప్పుడు ఎంత సమయం మరియు నా టైమ్ జోన్ ఏమిటి?",
+        "th": "ตอนนี้กี่โมงและไทม์โซนของฉันคืออะไร?",
+        "tr": "Şu an saat kaç ve saat dilimim ne?",
+        "ur": "ابھی کتنا وقت ہو رہا ہے اور میرا ٹائم زون کیا ہے؟",
+        "vi": "Bây giờ mấy giờ và múi giờ của tôi là gì?"
+      }]
+    },
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "alarms"}, "clock_calendar", {"action": "get", "target": "timers"}, {
+        "en": "Show my alarms and timers",
+        "fr": "Montre mes alarmes et minuteries",
+        "de": "Zeig mir Wecker und Timer"
+      }]
+    },
+    {
+      "tools": ["notes", {"action": "list"}, "clock_calendar", {"action": "get", "target": "time"}, {
+        "en": "List all notes and tell me the time",
+        "fr": "Liste toutes les notes et dis-moi l'heure",
+        "de": "Liste alle Notizen auf und sag mir die Uhrzeit"
+      }]
+    },
+    {
+      "tools": ["settings", {"action": "get", "target": "list"}, "clock_calendar", {"action": "get", "target": "date"}, {
+        "en": "Show all my settings and today's date",
+        "fr": "Montre tous mes paramètres et la date d'aujourd'hui",
+        "de": "Zeig mir alle Einstellungen und das heutige Datum"
+      }]
+    },
+    {
+      "tools": ["notes", {"action": "list"}, "settings", {"action": "get", "target": "spoken_lang"}, {
+        "en": "List my notes and check my spoken language"
+      }]
+    },
+    {
+      "tools": ["libretranslate", {"action": "list", "target": "languages"}, "clock_calendar", {"action": "get", "target": "time"}, {
+        "en": "What languages can I translate to and what time is it?"
+      }]
+    }
+  ],
+  "sequential": [
+    {
+      "tools": ["libretranslate", {"action": "detect", "target": "", "payload": "Bonjour le monde"},
+                "libretranslate", {"action": "translate", "target": "en", "payload": "Bonjour le monde | $prev"}, {
+        "en": "Detect this language and translate to English: Bonjour le monde",
+        "fr": "Détecte cette langue et traduis en anglais: Bonjour le monde",
+        "de": "Erkenne diese Sprache und übersetze ins Englische: Bonjour le monde"
+      }]
+    },
+    {
+      "tools": ["libretranslate", {"action": "detect", "target": "", "payload": "Hola mundo"},
+                "libretranslate", {"action": "translate", "target": "en", "payload": "Hola mundo | $prev"}, {
+        "en": "What language is this and translate to English: Hola mundo",
+        "fr": "Quelle langue est-ce et traduis en anglais: Hola mundo",
+        "de": "Welche Sprache ist das und übersetze ins Englische: Hola mundo"
+      }]
+    },
+    {
+      "tools": ["settings", {"action": "get", "target": "timezone"},
+                "clock_calendar", {"action": "get", "target": "time", "payload": "$prev"}, {
+        "en": "Get my timezone and tell me the time there",
+        "fr": "Obtiens mon fuseau horaire et dis-moi l'heure là-bas",
+        "de": "Hol meine Zeitzone und sag mir die Uhrzeit dort"
+      }]
+    },
+    {
+      "tools": ["settings", {"action": "get", "target": "spoken_lang"},
+                "libretranslate", {"action": "translate", "target": "en", "payload": "Hello world | $prev"}, {
+        "en": "Get my spoken language and translate hello world from it",
+        "fr": "Obtiens ma langue parlée et traduis bonjour le monde depuis celle-ci"
+      }]
+    },
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "date"},
+                "notes", {"action": "save", "target": "daily_log", "payload": "$prev"}, {
+        "en": "Get today's date and log it to a note"
+      }]
+    },
+    {
+      "tools": ["libretranslate", {"action": "detect", "target": "", "payload": "Guten Tag"},
+                "settings", {"action": "set", "target": "spoken_lang", "payload": "$prev"}, {
+        "en": "Detect this language and set it as my spoken language: Guten Tag"
+      }]
+    }
+  ],
+  "triple": [
+    {
+      "tools": ["libretranslate", {"action": "detect", "target": "", "payload": "Bonjour le monde"},
+                "libretranslate", {"action": "translate", "target": "en", "payload": "Bonjour le monde | $prev"},
+                "notes", {"action": "save", "target": "translation", "payload": "$prev"}, {
+        "en": "Detect this language, translate to English, and save to notes: Bonjour le monde",
+        "fr": "Détecte cette langue, traduis en anglais, et sauvegarde dans les notes: Bonjour le monde",
+        "de": "Erkenne diese Sprache, übersetze ins Englische und speichere in Notizen: Bonjour le monde"
+      }]
+    },
+    {
+      "tools": ["settings", {"action": "get", "target": "timezone"},
+                "clock_calendar", {"action": "get", "target": "time", "payload": "$prev"},
+                "notes", {"action": "save", "target": "time_check", "payload": "$prev"}, {
+        "en": "Get my timezone, get the time there, and save to a note",
+        "fr": "Obtiens mon fuseau horaire, obtiens l'heure, et sauvegarde dans une note",
+        "de": "Hol meine Zeitzone, hol die Uhrzeit dort und speichere in einer Notiz"
+      }]
+    },
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "date"},
+                "clock_calendar", {"action": "get", "target": "time"},
+                "notes", {"action": "save", "target": "daily_log", "payload": "$prev"}, {
+        "en": "Get the date and time and save both to a daily log note"
+      }]
+    },
+    {
+      "tools": ["settings", {"action": "get", "target": "spoken_lang"},
+                "libretranslate", {"action": "translate", "target": "en", "payload": "Hello world | $prev"},
+                "notes", {"action": "save", "target": "translation", "payload": "$prev"}, {
+        "en": "Get my language, translate hello world, and save to notes"
+      }]
+    }
+  ],
+  "llm_sequential": [
+    {
+      "tools": ["settings", {"action": "get", "target": "timezone"},
+                "llm", {"action": "forward", "target": "ai", "payload": "What time is it in $prev?"}, {
+        "en": "Get my timezone and ask the AI about the time there"
+      }]
+    },
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "time"},
+                "llm", {"action": "forward", "target": "ai", "payload": "It's currently $prev. What should I do next?"}, {
+        "en": "Get the time and ask the AI what to do next"
+      }]
+    }
+  ],
+  "llm_parallel": [
+    {
+      "tools": ["clock_calendar", {"action": "get", "target": "date"},
+                "llm", {"action": "forward", "target": "ai", "payload": "Tell me something interesting about today"}, {
+        "en": "Check today's date and ask the AI for something interesting about it"
+      }]
+    },
+    {
+      "tools": ["notes", {"action": "list"},
+                "llm", {"action": "forward", "target": "ai", "payload": "Review my notes and suggest improvements"}, {
+        "en": "List my notes and ask the AI to review them"
+      }]
+    }
+  ],
+  "irrelevant": [
+    {
+      "query": {"en": "What's the capital of France?", "fr": "Quelle est la capitale de la France?", "de": "Was ist die Hauptstadt von Frankreich?", "es": "¿Cuál es la capital de Francia?"},
+      "response": {"en": "The capital of France is Paris.", "fr": "La capitale de la France est Paris.", "de": "Die Hauptstadt von Frankreich ist Paris.", "es": "La capital de Francia es París."}
+    },
+    {
+      "query": {"en": "Tell me a joke"},
+      "response": {"en": "Why did the chicken cross the road? To get to the other side!"}
+    },
+    {
+      "query": {"en": "What's the weather like today?", "fr": "Quel temps fait-il aujourd'hui?", "de": "Wie ist das Wetter heute?"},
+      "response": {"en": "I'm sorry, I don't have access to weather data. I can only help with clock, calendar, translation, notes, and settings.", "fr": "Désolé, je n'ai pas accès aux données météo.", "de": "Tut mir leid, ich habe keinen Zugriff auf Wetterdaten."}
+    },
+    {
+      "query": {"en": "How do I sort a list in Python?", "fr": "Comment trier une liste en Python?"},
+      "response": {"en": "You can sort a list in Python using the sorted() function or the list.sort() method.", "fr": "Vous pouvez trier une liste en Python avec la fonction sorted() ou la méthode list.sort()."}
+    },
+    {
+      "query": {"en": "Send an email to John", "fr": "Envoyer un email à John", "de": "Sende eine E-Mail an John"},
+      "response": {"en": "I don't have an email tool available. I can only help with clock, calendar, translation, notes, and settings.", "fr": "Je n'ai pas d'outil email disponible.", "de": "Ich habe kein E-Mail-Werkzeug verfügbar."}
+    },
+    {
+      "query": {"en": "What is 2+2?", "ar": "ما حاصل 2+2؟", "bn": "2+2 কত?", "zh": "2+2等于多少？"},
+      "response": {"en": "2+2 equals 4.", "ar": "2+2 يساوي 4.", "bn": "2+2 সমান 4।", "zh": "2+2等于4。"}
+    },
+    {
+      "query": {"en": "How are you?", "fr": "Comment allez-vous?", "es": "¿Cómo estás?"},
+      "response": {"en": "I'm functioning well, thank you! How can I help you today?", "fr": "Je vais bien, merci !", "es": "¡Estoy bien, gracias!"}
+    },
+    {
+      "query": {"en": "Search the web for restaurants nearby", "fr": "Cherche des restaurants près de chez moi"},
+      "response": {"en": "I don't have a web search tool available. I can only help with clock, calendar, translation, notes, and settings.", "fr": "Je n'ai pas d'outil de recherche web disponible."}
+    },
+    {
+      "query": {"en": "Set a reminder for 5pm", "fr": "Rappelle-moi à 17h", "de": "Erinnere mich um 17 Uhr"},
+      "response": {"en": "I don't have a reminder tool. I can work with alarms and timers though - check the clock_calendar tool.", "fr": "Je n'ai pas d'outil de rappel.", "de": "Ich habe kein Erinnerungs-Werkzeug."}
+    },
+    {
+      "query": {"en": "What's the meaning of life?"},
+      "response": {"en": "That's a philosophical question! I'm designed to help with practical tasks like time, dates, translation, notes, and settings."}
+    },
+    {
+      "query": {"en": "Play some music", "fr": "Joue de la musique", "de": "Spiele Musik"},
+      "response": {"en": "I don't have a music playback tool. I can help with clock, calendar, translation, notes, and settings instead."}
+    },
+    {
+      "query": {"en": "What's my IP address?"},
+      "response": {"en": "I don't have access to network information. I can only help with clock, calendar, translation, notes, and settings."}
+    },
+    {
+      "query": {"en": "Save my password", "fr": "Sauvegarde mon mot de passe"},
+      "response": {"en": "I wouldn't recommend saving passwords in a note for security reasons. I can help you save other types of information though.", "fr": "Je ne recommande pas de sauvegarder les mots de passe dans une note pour des raisons de sécurité."}
+    },
+    {
+      "query": {"en": "Turn on the flashlight", "fr": "Allume la lampe torche", "de": "Schalte die Taschenlampe ein"},
+      "response": {"en": "I don't have a flashlight control tool. I can only help with clock, calendar, translation, notes, and settings.", "fr": "Je n'ai pas d'outil pour la lampe torche.", "de": "Ich habe kein Taschenlampen-Werkzeug."}
+    },
+    {
+      "query": {"en": "Write a poem about the moon"},
+      "response": {"en": "Here's a short poem: The moon shines bright, a silver light, guiding travelers through the night."}
+    },
+    {
+      "query": {"en": "What languages do you speak?", "fr": "Quelles langues parles-tu?", "de": "Welche Sprachen sprichst du?"},
+      "response": {"en": "I can work with 30+ languages for translation. You can use the libretranslate tool to translate between them!", "fr": "Je peux travailler avec plus de 30 langues pour la traduction.", "de": "Ich kann mit über 30 Sprachen arbeiten."}
+    },
+    {
+      "query": {"en": "Call me later"},
+      "response": {"en": "I can't make phone calls. I can help with clock, calendar, translation, notes, and settings."}
+    },
+    {
+      "query": {"en": "How much does a loaf of bread cost?"},
+      "response": {"en": "I don't have real-time pricing information. You might want to check a local grocery store's website."}
+    },
+    {
+      "query": {"en": "Change my password", "fr": "Change mon mot de passe"},
+      "response": {"en": "I don't have a password management tool. I can update your app settings like timezone or language preference.", "fr": "Je n'ai pas d'outil de gestion de mots de passe."}
+    },
+    {
+      "query": {"en": "Take a picture", "fr": "Prends une photo"},
+      "response": {"en": "I don't have a camera tool. I can only help with clock, calendar, translation, notes, and settings."}
+    }
+  ]
+}

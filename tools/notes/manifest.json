@@ -2,7 +2,7 @@
   "name": "notes",
   "description": "CRUD for .md notes in memory/notes/. Supports line-level editing, timestamps, and find/replace.",
   "risk_tier": "STATEFUL",
-  "verbs": ["list", "read", "save", "append", "delete", "change", "rename", "search"],
+  "actions": ["list", "read", "save", "append", "delete", "change", "rename", "search"],
   "target_hint": "filename",
   "payload_hint": "content, line numbers, or find/replace query",
   "manifest": {
@@ -39,6 +39,30 @@
       "search": [
         ["filename (optional)", "keyword (returns matching lines and line numbers)"]
       ]
+    }
+  },
+  "schema": {
+    "function": {
+      "name": "notes",
+      "description": "CRUD for .md notes. Supports line-level editing, timestamps, and find/replace.",
+      "parameters": {
+        "type": "OBJECT",
+        "properties": {
+          "action": {
+            "type": "STRING",
+            "description": "Action verb. One of: list, read, save, append, delete, change, rename, search"
+          },
+          "target": {
+            "type": "STRING",
+            "description": "Note filename"
+          },
+          "payload": {
+            "type": "STRING",
+            "description": "Content, line numbers, or find/replace query"
+          }
+        },
+        "required": ["action"]
+      }
     }
   }
 }

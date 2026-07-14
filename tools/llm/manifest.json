@@ -1,0 +1,44 @@
+{
+  "name": "llm",
+  "description": "Routes user input to the main AI model for conversation, instruction, or complex queries. All user history is available to the AI.",
+  "risk_tier": "NETWORK",
+  "actions": ["forward"],
+  "target_hint": "ai (for AI processing)",
+  "payload_hint": "user message text to forward to AI",
+  "manifest": {
+    "example": {
+      "verb": "forward",
+      "target": "ai",
+      "payload": "Tell me a story about space"
+    },
+    "v@p": {
+      "forward": [
+        ["ai", "user message to forward to the AI"]
+      ]
+    }
+  },
+  "schema": {
+    "function": {
+      "name": "llm",
+      "description": "Routes user input to the main AI model for conversation, instruction, or complex queries. All user history is available to the AI.",
+      "parameters": {
+        "type": "OBJECT",
+        "properties": {
+          "action": {
+            "type": "STRING",
+            "description": "Action verb: forward"
+          },
+          "target": {
+            "type": "STRING",
+            "description": "Target: 'ai' for AI processing"
+          },
+          "payload": {
+            "type": "STRING",
+            "description": "The user message to forward to the AI"
+          }
+        },
+        "required": ["action"]
+      }
+    }
+  }
+}

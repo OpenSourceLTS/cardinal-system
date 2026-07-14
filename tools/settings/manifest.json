@@ -2,7 +2,7 @@
   "name": "settings",
   "description": "User preferences and personalization settings for response style, tone, language, and behavior.",
   "risk_tier": "STATEFUL",
-  "verbs": ["get", "set", "delete"],
+  "actions": ["get", "set", "delete"],
   "target_hint": "preference name or 'list' for all preferences",
   "payload_hint": "preference value for set, or setting name for get/delete",
   "manifest": {
@@ -17,17 +17,58 @@
         ["timezone", ""],
         ["time_format", ""],
         ["spoken_lang", ""],
+        ["llm_enabled", ""],
+        ["llm_provider", ""],
+        ["llm_model", ""],
+        ["llm_base_url", ""],
+        ["llm_api_key", ""],
+        ["fc_model", ""],
+        ["fc_base_url", ""],
+        ["fc_api_key", ""],
         ["list", ""]
       ],
       "set": [
         ["setting", "setting_name|value"],
         ["timezone", "continent/city | country | city | country/city | UTC+OFFSET | +OFFSET"],
         ["time_format", "12h | 24h"],
-        ["spoken_lang", "language code (e.g. bn, fr, ja, de, es)"]
+        ["spoken_lang", "language code (e.g. bn, fr, ja, de, es)"],
+        ["llm_enabled", "true | false"],
+        ["llm_provider", "openrouter | openai | lmstudio | custom"],
+        ["llm_api_key", "your API key"],
+        ["llm_model", "model name (e.g. openai/gpt-4o, google/gemma-3-270m-it)"],
+        ["llm_base_url", "custom base URL for API calls"],
+        ["llm_api_key", "API key for the forward LLM"],
+        ["fc_model", "model name for function-calling LLM (e.g. gemma-3-270m-it)"],
+        ["fc_base_url", "LM Studio URL for function-calling LLM (e.g. http://localhost:1234)"],
+        ["fc_api_key", "API key for function-calling LLM"]
       ],
       "delete": [
         ["setting", "setting_name"]
       ]
+    }
+  },
+  "schema": {
+    "function": {
+      "name": "settings",
+      "description": "User preferences and personalization settings for response style, tone, language, and behavior.",
+      "parameters": {
+        "type": "OBJECT",
+        "properties": {
+          "action": {
+            "type": "STRING",
+            "description": "Action verb. One of: get, set, delete"
+          },
+          "target": {
+            "type": "STRING",
+            "description": "Setting name: timezone, time_format, spoken_lang, llm_enabled, llm_provider, llm_api_key, llm_model, llm_base_url, fc_model, fc_base_url, fc_api_key, list"
+          },
+          "payload": {
+            "type": "STRING",
+            "description": "Value to set for set action; empty for get/delete"
+          }
+        },
+        "required": ["action"]
+      }
     }
   }
 }

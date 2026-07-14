@@ -399,9 +399,9 @@ Place business logic in `scripts/` modules. Each handler receives parsed command
     "name": "mytool",
     "description": "Does something useful.",
     "risk_tier": "SAFE",
-    "verbs": ["get", "set"],
+    "actions": ["get", "set"],
     "manifest": {
-        "example": { "verb": "get", "target": "info", "payload": "" },
+        "example": { "action": "get", "target": "info", "payload": "" },
         "v@p": {
             "get": [["target", "payload"]],
             "set": [["target", "payload"]]
@@ -412,12 +412,12 @@ Place business logic in `scripts/` modules. Each handler receives parsed command
 
 ### Step 5: Registration
 
-No manual registration needed. `core/mcp_server.py` auto-discovers all tools. Just ensure:
+No manual registration needed. `core/mcp_server.py` auto-discovered all tools. Just ensure:
 
 - Directory is `tools/{name}/`
 - Python file is `tools/{name}/{name}_tool.py`
 - Class name is PascalCase (e.g., `weather` → `WeatherTool`)
-- `manifest.json` exists with valid `name`, `description`, `verbs`, `risk_tier`, and `manifest.v@p`
+- `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.v@p`
 
 ---
 

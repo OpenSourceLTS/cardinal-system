@@ -180,7 +180,7 @@ ctx.resolve_ref(value, results)  # Resolves $prev, $1..$N, memo:// references
 ToolManifest(
     name="clock_calendar",
     description="Time, date, moon, ...",
-    verbs=["get", "set", "delete"],
+    actions=["get", "set", "delete"],
     target_hint="time, date, moon, ...",
     payload_hint="value, date, time, ...",
     risk_tier=RiskTier.SAFE,
@@ -204,7 +204,7 @@ Convention: `tools/{dir}/{tool_name}_tool.py` contains a class inheriting `BaseT
 Routes tool calls through a 6-step validation pipeline:
 
 1. **Tool exists** — checks `self._tools` registry
-2. **Verb valid** — checks against the tool's `manifest.verbs`
+2. **Verb valid** — checks against the tool's `manifest.actions`
 3. **Target valid** — checks against `v@p` map (when targets are literal strings)
 4. **Payload valid** — resolved via `$ref` placeholders
 5. **Confirmation** — required for flagged commands
@@ -318,11 +318,11 @@ Directives:
 
 ### 3.8 Canonical Verbs
 
-Every tool verb must come from this canonical list. New tools should prefer existing verbs for consistency.
+Every tool action must come from this canonical list. New tools should prefer existing actions for consistency.
 
 `append`, `approve`, `archive`, `ask`, `block`, `bookmark`, `branch`, `calculate`, `change`, `cancel`, `check`, `clear`, `comment`, `commit`, `complete`, `compress`, `convert`, `copy`, `create`, `decline`, `decrypt`, `delete`, `deny`, `deploy`, `directions`, `disable`, `dismiss`, `enable`, `embed`, `encrypt`, `exec`, `extract`, `fetch`, `follow`, `forecast`, `forward`, `generate`, `get`, `grant`, `grab`, `like`, `list`, `log`, `mention`, `merge`, `move`, `mute`, `navigate`, `pair`, `paste`, `pause`, `pin`, `place`, `play`, `post`, `predict`, `publish`, `pull`, `push`, `query`, `queue`, `react`, `read`, `release`, `remind`, `remove`, `rename`, `reply`, `report`, `reschedule`, `reset`, `restore`, `revoke`, `rollback`, `run`, `say`, `schedule`, `search`, `send`, `set`, `save`, `share`, `sort`, `stop`, `stream`, `subscribe`, `sync`, `toggle`, `translate`, `train`, `unblock`, `uncheck`, `unfollow`, `unmute`, `unpin`, `unsubscribe`, `update`, `upload`, `write`
 
-Each tool defines its own subset in `manifest.json` under `"verbs"`. The Router validates against per-tool verbs, not this master list.
+Each tool defines its own subset in `manifest.json` under `"actions"`. The Router validates against per-tool actions, not this master list.
 
 ---
 
@@ -825,11 +825,11 @@ def handle_set(target, payload, metadata, ctx):
     "name": "mytool",
     "description": "Does something useful.",
     "risk_tier": "SAFE",
-    "verbs": ["get", "set"],
+    "actions": ["get", "set"],
     "target_hint": "greeting or setting_name",
     "payload_hint": "value to set",
     "manifest": {
-        "example": { "verb": "get", "target": "greeting", "payload": "" },
+        "example": { "action": "get", "target": "greeting", "payload": "" },
         "v@p": {
             "get": [["greeting", ""]],
             "set": [["setting_name", "value"]]
@@ -842,10 +842,10 @@ def handle_set(target, payload, metadata, ctx):
 - `name` — tool name (must match directory and class naming convention)
 - `description` — shown to the AI in tool definitions
 - `risk_tier` — `SAFE`, `STATEFUL`, `NETWORK`, or `DESTRUCTIVE`
-- `verbs` — list of supported action verbs
+- `actions` — list of supported action verbs
 - `target_hint` / `payload_hint` — human-readable hints
-- `manifest.example` — example verb/target/payload for the AI
-- `manifest.v@p` — verb → [[target, payload_format]] mapping for validation
+- `manifest.example` — example action/target/payload for the AI
+- `manifest.v@p` — action → [[target, payload_format]] mapping for validation
 - `manifest.examples` — array of examples (alternative to single `example`)
 
 ### Step 5: Registration
@@ -855,7 +855,7 @@ No manual registration needed. `core/mcp_server.py` auto-discovers all tools. Ju
 1. Directory is `tools/{name}/`
 2. Python file is `tools/{name}/{name}_tool.py`
 3. Class name is PascalCase of the tool name (e.g., `weather` → `WeatherTool`)
-4. `manifest.json` exists with valid `name`, `description`, `verbs`, `risk_tier`, and `manifest.v@p`
+4. `manifest.json` exists with valid `name`, `description`, `actions`, `risk_tier`, and `manifest.v@p`
 5. The class inherits from `BaseTool`
 
 Discovery flow:
@@ -913,11 +913,11 @@ def handle_get(city, unit, metadata, ctx):
     "name": "weather",
     "description": "Current weather conditions for any city.",
     "risk_tier": "NETWORK",
-    "verbs": ["get"],
+    "actions": ["get"],
     "target_hint": "city_name",
     "payload_hint": "unit (celsius or fahrenheit)",
     "manifest": {
-        "example": { "verb": "get", "target": "London", "payload": "celsius" },
+        "example": { "action": "get", "target": "London", "payload": "celsius" },
         "v@p": {
             "get": [["city_name", "celsius|fahrenheit"]]
         }

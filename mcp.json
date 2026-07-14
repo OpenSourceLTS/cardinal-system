@@ -4,7 +4,7 @@
       "description": "Cardinal System v0.0.1 — unified tool execution for clock, calendar, chat, memo, and settings tools",
       "command": "python",
       "args": [
-        "C:/path/to/cardinalsystem/core/mcp_server.py"
+        "C:/Users/Laptop/Documents/cardinalsystem/core/mcp_server.py"
       ],
       "env": {}
     }

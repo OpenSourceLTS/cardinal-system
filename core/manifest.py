@@ -8,7 +8,7 @@ import json
 # Reference vocabulary of all known action verbs in the system.
 # When creating a new tool, prefer using an existing verb from this list.
 # If none fits, add a new one — this list tracks every top-level action name.
-# Each tool declares its own subset under "verbs" in manifest.json;
+# Each tool declares its own subset under "actions" in manifest.json;
 # the router validates against the tool's own list, not this master list.
 CANONICAL_VERBS = [
     "append", "approve", "archive", "ask", "block", "bookmark", "branch",
@@ -47,7 +47,7 @@ class RiskTier(Enum):
 class ToolManifest:
     name: str
     description: str
-    verbs: List[str]
+    actions: List[str]
     target_hint: str
     payload_hint: str
     metadata_schema: Optional[Dict[str, str]] = None
@@ -65,7 +65,7 @@ class ToolManifest:
         return cls(
             name=data["name"],
             description=data.get("description", ""),
-            verbs=data.get("verbs", []),
+            actions=data.get("actions", []),
             target_hint=data.get("target_hint", ""),
             payload_hint=data.get("payload_hint", ""),
             metadata_schema=data.get("metadata_schema", {}),
@@ -128,7 +128,7 @@ def discover_tools() -> List[dict]:
     _index_tool_dirs()
     for tool_name, dir_name in _TOOL_DIR_MAP.items():
         data = load_manifest(tool_name)
-        required = ["name", "description", "verbs", "manifest"]
+        required = ["name", "description", "actions", "manifest"]
         if all(k in data for k in required):
             tools.append(data)
     return tools

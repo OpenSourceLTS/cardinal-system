@@ -66,7 +66,7 @@ def _build_tool_definitions() -> list[dict]:
     definitions = []
     for data in tools:
         name = data["name"]
-        verbs = data["verbs"]
+        actions = data["actions"]
         description = _build_tool_description(data)
 
         definitions.append({
@@ -77,8 +77,8 @@ def _build_tool_definitions() -> list[dict]:
                 "properties": {
                     "verb": {
                         "type": "string",
-                        "enum": verbs,
-                        "description": f"Action verb. One of: {', '.join(verbs)}"
+                        "enum": actions,
+                        "description": f"Action verb. One of: {', '.join(actions)}"
                     },
                     "target": {
                         "type": "string",

@@ -1,13 +1,49 @@
 import json
 from typing import Optional
+from pathlib import Path
 import requests
 
 from . import history
 from .manifest import discover_tools
 
+SETTINGS_FILE = Path(__file__).parent.parent / "memory" / "settings.md"
 
-# Dynamically builds the system prompt from manifest.json of every registered tool.
-# This keeps the prompt in sync when tools are added or removed.
+
+def _read_settings() -> dict:
+    prefs = {}
+    if SETTINGS_FILE.exists():
+        for line in SETTINGS_FILE.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if ":" in line and not line.startswith("#"):
+                key, _, val = line.partition(":")
+                prefs[key.strip()] = val.strip()
+    return prefs
+
+
+def _get_lm_studio_url() -> str:
+    return _read_settings().get("fc_base_url", "http://localhost:1234")
+
+
+def _get_api_key() -> str:
+    return _read_settings().get("fc_api_key", "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK")
+
+
+def _get_model() -> str:
+    return _read_settings().get("fc_model", "gemma-3-270m-it")
+
+
+def _get_forward_model() -> str:
+    return "qwen3-0.6b-heretic-abliterated-uncensored"
+
+
+def _get_forward_base_url() -> str:
+    return _read_settings().get("llm_base_url", "http://localhost:1234")
+
+
+def _get_forward_api_key() -> str:
+    return _read_settings().get("llm_api_key", "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK")
+
+
 def _build_system_prompt() -> str:
     tools = discover_tools()
     names = ", ".join(t.get("name", "") for t in tools)
@@ -23,7 +59,8 @@ def _build_system_prompt() -> str:
         "Directives:",
         "- ACTION REQUIRED: You MUST use tool calls to fetch dynamic information or perform state changes for every request.",
         "- NO ASSUMPTIONS: Never assume a request is already handled. Never answer from internal knowledge or hallucinate.",
-        "- EXECUTION: Always call the relevant tool(s) to fulfill the user's intent, and base your final response strictly on tool outputs."
+        "- EXECUTION: Always call the relevant tool(s) to fulfill the user's intent, and base your final response strictly on tool outputs.",
+        "- TOOL FORWARDING: If a request requires general conversation or complex reasoning beyond these tools, use the 'llm' tool with verb='forward' target='ai' to delegate to the AI model.",
     ]
     if first_example:
         parts.append(f'Example: for "what time is it" -> call {first_example}')
@@ -32,20 +69,11 @@ def _build_system_prompt() -> str:
 
 _SYSTEM_PROMPT = _build_system_prompt()
 
-# LM Studio API configuration
-LM_STUDIO_URL = "http://localhost:1234"
-LM_STUDIO_API_KEY = "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK"
-MODEL = "gemma-3-270m-it"
 
-
-# Sends user input to LM Studio's native API with MCP integration.
-# The model decides which tools to call; results come back inline.
 class CardinalSystemEngine:
     def __init__(self):
         self.session_id: Optional[str] = None
 
-    # Prepends conversation history (English-only for assistant replies)
-    # so the model has context from previous turns.
     def _build_input(self, user_input: str) -> str:
         if not self.session_id:
             return user_input
@@ -58,13 +86,17 @@ class CardinalSystemEngine:
     def process_request(self, user_input: str, session_id: str = "") -> dict:
         self.session_id = session_id or None
 
+        lm_studio_url = _get_lm_studio_url()
+        api_key = _get_api_key()
+        model = _get_model()
+
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {LM_STUDIO_API_KEY}",
+            "Authorization": f"Bearer {api_key}",
         }
 
         payload = {
-            "model": MODEL,
+            "model": model,
             "input": self._build_input(user_input),
             "system_prompt": _SYSTEM_PROMPT,
             "integrations": ["mcp/cardinal-system"],
@@ -75,7 +107,7 @@ class CardinalSystemEngine:
 
         try:
             resp = requests.post(
-                f"{LM_STUDIO_URL}/api/v1/chat",
+                f"{lm_studio_url}/api/v1/chat",
                 json=payload,
                 headers=headers,
                 timeout=300,
@@ -83,13 +115,12 @@ class CardinalSystemEngine:
             resp.raise_for_status()
             data = resp.json()
         except requests.exceptions.ConnectionError:
-            return {"success": False, "error": "Cannot connect to LM Studio at " + LM_STUDIO_URL}
+            return {"success": False, "error": "Cannot connect to LM Studio at " + lm_studio_url}
         except requests.exceptions.Timeout:
             return {"success": False, "error": "LM Studio request timed out"}
         except Exception as e:
             return {"success": False, "error": f"LM Studio error: {e}"}
 
-        # Separate text messages from tool call results
         output_items = data.get("output", [])
         texts = []
         tool_results = []
@@ -105,9 +136,6 @@ class CardinalSystemEngine:
 
         response_text = " ".join(texts).strip()
         stats = data.get("stats", {})
-
-        if self.session_id:
-            pass  # History saving is handled by web_server.py
 
         return {
             "success": True,

@@ -76,7 +76,7 @@ class Router:
                 ctx.results.append(results[i]); continue
 
             # 2. Check the verb is in the tool's declared verb list
-            if node_verb not in tool.manifest.verbs:
+            if node_verb not in tool.manifest.actions:
                 results[i] = CommandResult.fail(
                     f"Verb '{node_verb}' not allowed for '{node_tool}'.\n{self._manifest_summary(node_tool)}",
                     tool=node_tool, verb=node_verb, target=node_target)

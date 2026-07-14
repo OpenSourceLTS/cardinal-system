@@ -2,7 +2,7 @@
   "name": "clock_calendar",
   "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
   "risk_tier": "SAFE",
-  "verbs": ["get", "set", "delete"],
+  "actions": ["get", "set", "delete"],
   "target_hint": "time, date, moon, timezone, alarm, timer, event",
   "payload_hint": "value, date, time, or query",
   "manifest": {
@@ -45,6 +45,30 @@
         ["timer", "id"],
         ["event", "id"]
       ]
+    }
+  },
+  "schema": {
+    "function": {
+      "name": "clock_calendar",
+      "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
+      "parameters": {
+        "type": "OBJECT",
+        "properties": {
+          "action": {
+            "type": "STRING",
+            "description": "Action verb. One of: get, set, delete"
+          },
+          "target": {
+            "type": "STRING",
+            "description": "Target resource: time, date, moon, timezone, alarm, timer, event, alarms, timers, stopwatch, events, between, until, since, date_offset, day_of_week, is_leap_year, time_format, calendar"
+          },
+          "payload": {
+            "type": "STRING",
+            "description": "Value, date, time, or query"
+          }
+        },
+        "required": ["action"]
+      }
     }
   }
 }
