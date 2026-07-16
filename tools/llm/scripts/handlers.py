@@ -36,18 +36,17 @@ def handle_forward(target, payload, metadata, ctx):
         "Authorization": f"Bearer {api_key}",
     }
 
+    messages = [{"role": "user", "content": input_text}]
     body = {
         "model": model,
-        "input": input_text,
-        "system_prompt": "You are a helpful AI assistant.",
-        "context_length": 8192,
+        "messages": messages,
         "temperature": 0.7,
-        "max_output_tokens": 1000,
+        "max_tokens": 1000,
     }
 
     try:
         resp = requests.post(
-            f"{base_url}/api/v1/chat",
+            f"{base_url}/v1/chat/completions",
             json=body,
             headers=headers,
             timeout=120,
@@ -55,13 +54,7 @@ def handle_forward(target, payload, metadata, ctx):
         resp.raise_for_status()
         data = resp.json()
 
-        output_items = data.get("output", [])
-        texts = [
-            item.get("content", "")
-            for item in output_items
-            if item.get("type") == "message"
-        ]
-        response_text = " ".join(texts).strip()
+        response_text = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
 
         if response_text:
             return CommandResult.ok(response_text)

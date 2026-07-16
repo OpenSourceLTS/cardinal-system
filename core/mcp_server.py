@@ -52,8 +52,10 @@ def _build_tool_definitions() -> list[dict]:
                     properties[pname]["description"] = pdef["description"]
                 if "enum" in pdef:
                     properties[pname]["enum"] = pdef["enum"]
+            title = func_name.replace("_", " ").title()
             defs.append({
                 "name": func_name,
+                "title": title,
                 "description": fn_def.get("description", data.get("description", "")),
                 "inputSchema": {
                     "type": "object",

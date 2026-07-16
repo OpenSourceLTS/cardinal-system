@@ -1,6 +1,10 @@
 """Training Data Generator for FunctionGemma Fine-Tuning.
-Generates training_data.jsonl in google/mobile-actions format
-with specific function names and semantically meaningful parameter names.
+Generates training_data.jsonl matching google/mobile-actions format exactly:
+  - roles: only "user" and "assistant" (no "developer")
+  - arguments: JSON strings (not objects)
+  - tool_calls: has "id" (call_xxxx) and "type": "function"
+  - tools per sample: random subset of ~7 (matches mobile-actions)
+  - multi-call: multiple tool_calls in one assistant message
 
 Usage:
     python generate_training_data.py
@@ -15,6 +19,7 @@ import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from uuid import uuid4
 
 LANGUAGES = [
     ("ar", "Arabic"), ("bn", "Bangla"), ("zh", "Chinese (Mandarin)"),
@@ -80,13 +85,8 @@ def random_datetime():
     return _EPOCH + timedelta(seconds=rand_secs)
 
 
-def build_developer_content(dt: datetime) -> str:
-    day_name = _DAY_NAMES[dt.weekday()]
-    return (
-        f"Current date and time given in YYYY-MM-DDTHH:MM:SS format: {dt.strftime('%Y-%m-%dT%H:%M:%S')}\n"
-        f"Day of week is {day_name}\n"
-        f"You are a model that can do function calling with the following functions\n"
-    )
+def random_tool_subset(tools_schema: list, k: int = 7) -> list:
+    return random.sample(tools_schema, min(k, len(tools_schema)))
 
 
 def build_tools_schema(functions: list[dict]) -> list:
@@ -123,9 +123,11 @@ def build_tool_calls(calls: list) -> list:
     for name, args in calls:
         filtered = {k: v for k, v in args.items() if v is not None and v != ""}
         result.append({
+            "id": "call_" + uuid4().hex[:8],
+            "type": "function",
             "function": {
                 "name": name,
-                "arguments": filtered,
+                "arguments": json.dumps(filtered),
             }
         })
     return result
@@ -185,21 +187,16 @@ def generate_jsonl(
     records = []
     lang_codes = [lc for lc, _ in languages]
 
-    def shuffled_tools():
-        return random.sample(tools_schema, len(tools_schema))
-
-    def add_record(phrase: str, calls: list):
-        dt = random_datetime()
-        dev_content = build_developer_content(dt)
-        tool_calls = build_tool_calls(calls)
+    def add_record(phrase: str, calls: list, is_text: bool = False):
+        messages = [{"role": "user", "content": phrase}]
+        if is_text:
+            messages.append({"role": "assistant", "content": calls})
+        else:
+            messages.append({"role": "assistant", "tool_calls": build_tool_calls(calls)})
         records.append({
             "metadata": "train",
-            "tools": shuffled_tools(),
-            "messages": [
-                {"role": "developer", "content": dev_content},
-                {"role": "user", "content": phrase},
-                {"role": "assistant", "tool_calls": tool_calls},
-            ],
+            "tools": random_tool_subset(tools_schema, 7),
+            "messages": messages,
         })
 
     for text, func_name, args in single_rows:
@@ -212,60 +209,40 @@ def generate_jsonl(
         calls = [(items[i], items[i + 1]) for i in range(0, len(items), 2)]
         return phrase, calls
 
+    # Collect all multi-call base entries
+    multi_entries = []
     for entry in multi_config.get("parallel", []):
-        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
-            add_record(phrase, calls)
-
+            multi_entries.append((code, entry["tools"]))
     for entry in multi_config.get("sequential", []):
-        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
-            add_record(phrase, calls)
-
+            multi_entries.append((code, entry["tools"]))
     for entry in multi_config.get("triple", []):
-        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
+            multi_entries.append((code, entry["tools"]))
+
+    # Calculate multiplier to achieve ~33% multi-call
+    single_count = len(single_rows)
+    multi_base = len(multi_entries)
+    if multi_base > 0:
+        target_ratio = 0.333
+        # k * multi_base / (single_count + k * multi_base) = target_ratio
+        # k * multi_base = target_ratio * single_count + target_ratio * k * multi_base
+        # k * multi_base * (1 - target_ratio) = target_ratio * single_count
+        # k = target_ratio * single_count / (multi_base * (1 - target_ratio))
+        k_exact = target_ratio * single_count / (multi_base * (1 - target_ratio))
+        k_floor = int(k_exact)
+        k_ceil = k_floor + 1
+        frac = k_exact - k_floor
+    else:
+        k_floor = 0
+        frac = 0
+
+    for code, tools in multi_entries:
+        count = k_ceil if random.random() < frac else k_floor
+        for _ in range(count):
+            phrase, calls = process_multi_entry(tools)
             add_record(phrase, calls)
-
-    for entry in multi_config.get("no_tool", []):
-        queries = entry.get("query", {})
-        responses = entry.get("response", {})
-        for code in lang_codes:
-            query = queries.get(code, queries.get("en", ""))
-            response = responses.get(code, responses.get("en", ""))
-            if not query or not response:
-                continue
-            dt = random_datetime()
-            dev_content = build_developer_content(dt)
-            records.append({
-                "metadata": "train",
-                "tools": shuffled_tools(),
-                "messages": [
-                    {"role": "developer", "content": dev_content},
-                    {"role": "user", "content": query},
-                    {"role": "assistant", "content": response},
-                ],
-            })
-
-    for entry in multi_config.get("irrelevant", []):
-        queries = entry.get("query", {})
-        responses = entry.get("response", {})
-        for code in lang_codes:
-            query = queries.get(code, queries.get("en", ""))
-            response = responses.get(code, responses.get("en", ""))
-            if not query or not response:
-                continue
-            dt = random_datetime()
-            dev_content = build_developer_content(dt)
-            records.append({
-                "metadata": "train",
-                "tools": shuffled_tools(),
-                "messages": [
-                    {"role": "developer", "content": dev_content},
-                    {"role": "user", "content": query},
-                    {"role": "assistant", "content": response},
-                ],
-            })
 
     random.shuffle(records)
     return records

@@ -102,38 +102,21 @@ def handle_set(target, payload, metadata, ctx):
         return CommandResult.ok(f"Alarm set for {hour:02d}:{minute:02d}" + (f" ({label})" if label else ""))
 
     if t == "timer":
-        total_secs = 0
-        if p.endswith("s") and not p.endswith("ds") and not p.endswith("ins"):
-            try:
-                val = p.rstrip("s").strip()
-                total_secs = int(val)
-            except ValueError:
-                return CommandResult.fail(f"Cannot parse duration: '{p}'")
-        elif "minute" in p.lower():
-            m = __import__('re').search(r'(\d+)', p)
-            if m:
-                total_secs = int(m.group(1)) * 60
-            else:
-                return CommandResult.fail(f"Cannot parse duration: '{p}'")
-        elif "hour" in p.lower():
-            m = __import__('re').search(r'(\d+)', p)
-            if m:
-                total_secs = int(m.group(1)) * 3600
-            else:
-                return CommandResult.fail(f"Cannot parse duration: '{p}'")
-        elif p.endswith("m"):
-            try:
-                total_secs = int(p.rstrip("m")) * 60
-            except ValueError:
-                return CommandResult.fail(f"Cannot parse duration: '{p}'")
-        elif p.endswith("h"):
-            try:
-                total_secs = int(p.rstrip("h")) * 3600
-            except ValueError:
-                return CommandResult.fail(f"Cannot parse duration: '{p}'")
-        else:
+        import re as _re
+        dur_match = _re.match(r'(\d+)\s*(s(?:ec(?:ond)?s?)?|m(?:in(?:ute)?s?)?|h(?:ou)?r?s?)\b\s*(.*)', p, _re.IGNORECASE)
+        if not dur_match:
             return CommandResult.fail("Specify duration like '10 minutes', '30s', '5m', '2h'")
-        timer = {"id": str(uuid.uuid4())[:8], "duration": total_secs, "target": time.time() + total_secs, "label": p}
+        val = int(dur_match.group(1))
+        unit = dur_match.group(2).lower()
+        rest = dur_match.group(3).strip()
+        total_secs = 0
+        if unit.startswith("s"):
+            total_secs = val
+        elif unit.startswith("m"):
+            total_secs = val * 60
+        elif unit.startswith("h"):
+            total_secs = val * 3600
+        timer = {"id": str(uuid.uuid4())[:8], "duration": total_secs, "target": time.time() + total_secs, "label": rest if rest else p}
         data.setdefault("timers", []).append(timer)
         _save(data)
         return CommandResult.ok(f"Timer set for {total_secs} seconds.")

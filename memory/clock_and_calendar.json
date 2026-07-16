@@ -36,13 +36,135 @@
       "hour": 12,
       "minute": 0,
       "label": ""
+    },
+    {
+      "id": "353855f4",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
+    },
+    {
+      "id": "72e205b4",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
+    },
+    {
+      "id": "a8872b08",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
+    },
+    {
+      "id": "7a495288",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
+    },
+    {
+      "id": "beb9dd1a",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
+    },
+    {
+      "id": "2ec69308",
+      "hour": 7,
+      "minute": 0,
+      "label": "wake up"
     }
   ],
-  "timers": [],
+  "timers": [
+    {
+      "id": "108fe054",
+      "duration": 30,
+      "target": 1784216204.051121,
+      "label": "30s test"
+    },
+    {
+      "id": "7d5865df",
+      "duration": 30,
+      "target": 1784218483.2844334,
+      "label": "30s test"
+    },
+    {
+      "id": "7d687842",
+      "duration": 300,
+      "target": 1784220191.3595307,
+      "label": "5 minutes"
+    },
+    {
+      "id": "dc0992c6",
+      "duration": 30,
+      "target": 1784220143.161334,
+      "label": "test"
+    },
+    {
+      "id": "8f8ff6c0",
+      "duration": 30,
+      "target": 1784220165.7693846,
+      "label": "test"
+    },
+    {
+      "id": "1ee88c84",
+      "duration": 30,
+      "target": 1784220345.6799157,
+      "label": "test"
+    },
+    {
+      "id": "8c312d28",
+      "duration": 30,
+      "target": 1784220458.602575,
+      "label": "test"
+    },
+    {
+      "id": "61853a17",
+      "duration": 30,
+      "target": 1784221046.6192396,
+      "label": "30s"
+    },
+    {
+      "id": "9ec60027",
+      "duration": 30,
+      "target": 1784221261.7882597,
+      "label": "30s"
+    }
+  ],
   "stopwatch": {
     "running": false,
     "start": null,
     "elapsed": 0
   },
-  "events": []
+  "events": [
+    {
+      "id": "091571fa",
+      "datetime": "2026-07-16",
+      "title": "tomorrow at 3pm meeting"
+    },
+    {
+      "id": "6e5b318d",
+      "datetime": "2026-07-16",
+      "title": "tomorrow at 3pm meeting"
+    },
+    {
+      "id": "cd44a886",
+      "datetime": "2026-07-16",
+      "title": "tomorrow at 3pm meeting"
+    },
+    {
+      "id": "cee301bd",
+      "datetime": "2024-05-14 12:00",
+      "title": "T:00 Order Confirmation"
+    },
+    {
+      "id": "43b4b3f5",
+      "datetime": "2026-07-16",
+      "title": "tomorrow at 3pm meeting"
+    },
+    {
+      "id": "95945834",
+      "datetime": "2026-07-16",
+      "title": "tomorrow at 3pm meeting"
+    }
+  ]
 }

@@ -111,16 +111,17 @@ def _day_of_year(payload):
 
 
 def _date_offset(payload):
-    parts = payload.rsplit(None, 1)
+    parts = payload.split(None, 1)
     if len(parts) != 2:
         return CommandResult.fail("Provide 'YYYY-MM-DD offset_days' (e.g. '2026-06-30 -15')")
     d = jdn.parse_date(parts[0])
     if not d:
         return CommandResult.fail("Invalid date. Use YYYY-MM-DD.")
+    offset_str = parts[1].split()[0]
     try:
-        offset = int(parts[1])
+        offset = int(offset_str)
     except ValueError:
-        return CommandResult.fail(f"Invalid offset '{parts[1]}'. Must be an integer.")
+        return CommandResult.fail(f"Invalid offset '{offset_str}'. Must be an integer.")
     jdn_val = jdn.gregorian_to_jdn(*d) + offset
     gy, gm, gd = jdn.jdn_to_gregorian(jdn_val)
     label = "before" if offset < 0 else "after"
