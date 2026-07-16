@@ -56,8 +56,8 @@ The dataset covers 39 system-level tools across multiple domains:
 | Statistic | Value |
 |-----------|-------|
 | Total samples | 8,490 |
-| Training samples | 8,490 |
-| Evaluation samples | 0 |
+| Training samples | 7,641 |
+| Evaluation samples | 849 |
 | Unique tools | 39 |
 | Format | JSONL |
 
@@ -72,3 +72,13 @@ dataset = load_dataset("SkGufranAhmed/functiongemma-finetune-dataset")
 ## License
 
 This dataset is licensed under CC-BY-4.0.
+
+## Uploading
+
+Uploaded to [Hugging Face Datasets](https://huggingface.co/datasets/SkGufranAhmed/functiongemma-finetune-dataset). Upload via:
+```python
+from huggingface_hub import HfApi
+api = HfApi()
+api.upload_file(path_or_fileobj="training_data.jsonl", path_in_repo="training_data.jsonl",
+                repo_id="SkGufranAhmed/functiongemma-finetune-dataset", repo_type="dataset")
+```

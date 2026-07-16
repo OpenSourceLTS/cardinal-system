@@ -1096,3 +1096,15 @@ The generated `training_data.jsonl` feeds into `train-finetune/finetune/colab_fi
 2. Notebook loads `google/functiongemma-270m-it`, applies SFT with proper `<start_of_turn>` / `<end_of_turn>` chat markers
 3. Fine-tuned model saves locally and can be uploaded to Hugging Face
 4. Load the fine-tuned model in LM Studio for inference
+
+**Eval split (10%):** The dataset is shuffled and split 90/10 by `metadata` field (`"train"` / `"eval"`). Current stats: 7,641 train, 849 eval.
+
+**Hugging Face upload:** The dataset is published as `SkGufranAhmed/functiongemma-finetune-dataset`. Upload via:
+```bash
+python -c "
+from huggingface_hub import HfApi
+api = HfApi()
+api.upload_file(path_or_fileobj='training_data.jsonl', path_in_repo='training_data.jsonl',
+                repo_id='SkGufranAhmed/functiongemma-finetune-dataset', repo_type='dataset')
+"
+```
