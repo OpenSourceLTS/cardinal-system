@@ -2,603 +2,189 @@
   "name": "llm",
   "description": "Routes user input to the main AI model for conversation, instruction, or complex queries. All user history is available to the AI.",
   "risk_tier": "NETWORK",
-  "actions": [
-    "forward"
-  ],
-  "target_hint": "ai (for AI processing)",
-  "payload_hint": "user message text to forward to AI",
-  "manifest": {
-    "example": {
+  "functions": {
+    "forward_to_ai": {
+      "description": "Send a message to the AI assistant for conversation, questions, or complex tasks",
+      "parameters": {
+        "message": { "type": "STRING", "description": "The message or question to forward to the AI" }
+      },
+      "required": ["message"],
       "action": "forward",
-      "target": "ai",
-      "payload": "Tell me a story about space"
-    },
-    "a@p": {
-      "forward": [
-        [
-          "ai",
-          "user message to forward to the AI"
-        ]
-      ]
+      "target_expr": "ai",
+      "payload_expr": "{message}",
+      "templates": ["{message}", "Help me with {message}", "Tell me {message}", "I want to know {message}", "Can you help me {message}", "I need help with {message}", "Explain {message} to me", "Give me advice on {message}", "I have a question: {message}", "i need {message}", "can u {message}", "tell me {message}"],
+      "examples": { "message": ["tell me a story about space", "what is the meaning of life", "explain quantum physics simply", "write a poem about the ocean", "how do I learn a new language", "what is machine learning", "give me advice on public speaking"] }
     }
-  },
-  "templates": {
-    "forward": {
-      "en": [
-        "Forward this to the AI: {payload}",
-        "Send to AI: {payload}",
-        "Ask the AI: {payload}",
-        "Pass this to the AI: {payload}",
-        "Let the AI handle this: {payload}",
-        "Tell the AI {payload}",
-        "Route to AI: {payload}",
-        "Forward to AI for: {payload}"
-      ]
-    }
-  },
-  "payload_examples": {
-    "ai": [
-      "tell me a story about space",
-      "what is the meaning of life",
-      "explain quantum physics simply",
-      "write a poem about the ocean",
-      "what are the benefits of meditation",
-      "how do I learn a new language",
-      "tell me about the history of Rome",
-      "what is machine learning",
-      "give me advice on public speaking",
-      "explain how photosynthesis works"
-    ]
   },
   "multi_tool": {
     "parallel": [
       {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time"
-          },
-          "settings",
-          {
-            "action": "get",
-            "target": "timezone"
-          },
-          {
-            "en": "What time is it and what's my timezone?"
-          }
-        ]
+        "tools": ["get_time", {}, "get_timezone_info", {}, {"en": "What time is it and what's my timezone?"}]
       },
       {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "alarms"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "timers"
-          },
-          {
-            "en": "Show my alarms and timers"
-          }
-        ]
+        "tools": ["list_alarms", {}, "list_timers", {}, {"en": "Show my alarms and timers"}]
       },
       {
-        "tools": [
-          "notes",
-          {
-            "action": "list"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time"
-          },
-          {
-            "en": "List all notes and tell me the time"
-          }
-        ]
+        "tools": ["list_notes", {}, "get_time", {}, {"en": "List all notes and tell me the time"}]
       },
       {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "list"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "date"
-          },
-          {
-            "en": "Show all my settings and today's date"
-          }
-        ]
+        "tools": ["list_settings", {}, "get_date", {}, {"en": "Show all my settings and today's date"}]
       },
       {
-        "tools": [
-          "notes",
-          {
-            "action": "list"
-          },
-          "settings",
-          {
-            "action": "get",
-            "target": "spoken_lang"
-          },
-          {
-            "en": "List my notes and check my spoken language"
-          }
-        ]
+        "tools": ["list_notes", {}, "list_settings", {}, {"en": "List my notes and check my settings"}]
       },
       {
-        "tools": [
-          "libretranslate",
-          {
-            "action": "list",
-            "target": "languages"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time"
-          },
-          {
-            "en": "What languages can I translate to and what time is it?"
-          }
-        ]
+        "tools": ["list_languages", {"scope": "languages"}, "get_time", {}, {"en": "What languages can I translate to and what time is it?"}]
+      },
+      {
+        "tools": ["save_note", {"content": "buy groceries", "filename": "todo"}, "set_alarm", {"time": "08:00", "label": "Wake up"}, {"en": "Save a todo and set an alarm"}]
       }
     ],
     "sequential": [
       {
-        "tools": [
-          "libretranslate",
-          {
-            "action": "detect",
-            "target": "",
-            "payload": "Bonjour le monde"
-          },
-          "libretranslate",
-          {
-            "action": "translate",
-            "target": "en",
-            "payload": "Bonjour le monde | $prev"
-          },
-          {
-            "en": "Detect this language and translate to English: Bonjour le monde"
-          }
-        ]
+        "tools": ["detect_language", {"text": "Ciao mondo"}, "translate_text", {"text": "Ciao mondo", "target_lang": "en"}, {"en": "What language is this and translate: Ciao mondo"}]
       },
       {
-        "tools": [
-          "libretranslate",
-          {
-            "action": "detect",
-            "target": "",
-            "payload": "Hola mundo"
-          },
-          "libretranslate",
-          {
-            "action": "translate",
-            "target": "en",
-            "payload": "Hola mundo | $prev"
-          },
-          {
-            "en": "What language is this and translate to English: Hola mundo"
-          }
-        ]
+        "tools": ["get_date", {}, "list_events", {}, {"en": "Get today's date and check my events"}]
       },
       {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "timezone"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time",
-            "payload": "$prev"
-          },
-          {
-            "en": "Get my timezone and tell me the time there"
-          }
-        ]
+        "tools": ["detect_language", {"text": "Bonjour le monde"}, "translate_text", {"text": "Bonjour le monde", "target_lang": "en"}, {"en": "Detect this language and translate to English: Bonjour le monde"}]
       },
       {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "spoken_lang"
-          },
-          "libretranslate",
-          {
-            "action": "translate",
-            "target": "en",
-            "payload": "Hello world | $prev"
-          },
-          {
-            "en": "Get my spoken language and translate hello world from it"
-          }
-        ]
+        "tools": ["detect_language", {"text": "Hola mundo"}, "translate_text", {"text": "Hola mundo", "target_lang": "en"}, {"en": "What language is this and translate to English: Hola mundo"}]
       },
       {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "date"
-          },
-          "notes",
-          {
-            "action": "save",
-            "target": "daily_log",
-            "payload": "$prev"
-          },
-          {
-            "en": "Get today's date and log it to a note"
-          }
-        ]
+        "tools": ["get_date", {}, "save_note", {"filename": "daily_log", "content": "daily log entry"}, {"en": "Get today's date and log it to a note"}]
       },
       {
-        "tools": [
-          "libretranslate",
-          {
-            "action": "detect",
-            "target": "",
-            "payload": "Guten Tag"
-          },
-          "settings",
-          {
-            "action": "set",
-            "target": "spoken_lang",
-            "payload": "$prev"
-          },
-          {
-            "en": "Detect this language and set it as my spoken language: Guten Tag"
-          }
-        ]
+        "tools": ["detect_language", {"text": "Kon'nichiwa"}, "translate_text", {"text": "Kon'nichiwa", "target_lang": "en"}, {"en": "Detect this language and translate to English: Kon'nichiwa"}]
+      },
+      {
+        "tools": ["read_note", {"filename": "groceries"}, "append_note", {"filename": "groceries", "content": "Milk, eggs"}, {"en": "Read my grocery list and add milk and eggs"}]
       }
     ],
     "triple": [
       {
-        "tools": [
-          "libretranslate",
-          {
-            "action": "detect",
-            "target": "",
-            "payload": "Bonjour le monde"
-          },
-          "libretranslate",
-          {
-            "action": "translate",
-            "target": "en",
-            "payload": "Bonjour le monde | $prev"
-          },
-          "notes",
-          {
-            "action": "save",
-            "target": "translation",
-            "payload": "$prev"
-          },
-          {
-            "en": "Detect this language, translate to English, and save to notes: Bonjour le monde"
-          }
-        ]
+        "tools": ["detect_language", {"text": "Bonjour le monde"}, "translate_text", {"text": "Bonjour le monde", "target_lang": "en"}, "save_note", {"content": "translation result", "filename": "translation"}, {"en": "Detect this language, translate to English, and save to notes: Bonjour le monde"}]
       },
       {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "timezone"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time",
-            "payload": "$prev"
-          },
-          "notes",
-          {
-            "action": "save",
-            "target": "time_check",
-            "payload": "$prev"
-          },
-          {
-            "en": "Get my timezone, get the time there, and save to a note"
-          }
-        ]
-      },
-      {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "date"
-          },
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time"
-          },
-          "notes",
-          {
-            "action": "save",
-            "target": "daily_log",
-            "payload": "$prev"
-          },
-          {
-            "en": "Get the date and time and save both to a daily log note"
-          }
-        ]
-      },
-      {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "spoken_lang"
-          },
-          "libretranslate",
-          {
-            "action": "translate",
-            "target": "en",
-            "payload": "Hello world | $prev"
-          },
-          "notes",
-          {
-            "action": "save",
-            "target": "translation",
-            "payload": "$prev"
-          },
-          {
-            "en": "Get my language, translate hello world, and save to notes"
-          }
-        ]
+        "tools": ["get_date", {}, "get_time", {}, "save_note", {"filename": "daily_log", "content": "daily update"}, {"en": "Get the date and time and save both to a daily log note"}]
       }
     ],
-    "llm_sequential": [
+    "no_tool": [
       {
-        "tools": [
-          "settings",
-          {
-            "action": "get",
-            "target": "timezone"
-          },
-          "llm",
-          {
-            "action": "forward",
-            "target": "ai",
-            "payload": "What time is it in $prev?"
-          },
-          {
-            "en": "Get my timezone and ask the AI about the time there"
-          }
-        ]
+        "query": {"en": "Hello"},
+        "response": {"en": "Hello! How can I help you today? I can check the time, date, translate text, manage notes and settings."}
       },
       {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "time"
-          },
-          "llm",
-          {
-            "action": "forward",
-            "target": "ai",
-            "payload": "It's currently $prev. What should I do next?"
-          },
-          {
-            "en": "Get the time and ask the AI what to do next"
-          }
-        ]
-      }
-    ],
-    "llm_parallel": [
-      {
-        "tools": [
-          "clock_calendar",
-          {
-            "action": "get",
-            "target": "date"
-          },
-          "llm",
-          {
-            "action": "forward",
-            "target": "ai",
-            "payload": "Tell me something interesting about today"
-          },
-          {
-            "en": "Check today's date and ask the AI for something interesting about it"
-          }
-        ]
+        "query": {"en": "Thanks"},
+        "response": {"en": "You're welcome! Let me know if you need anything else."}
       },
       {
-        "tools": [
-          "notes",
-          {
-            "action": "list"
-          },
-          "llm",
-          {
-            "action": "forward",
-            "target": "ai",
-            "payload": "Review my notes and suggest improvements"
-          },
-          {
-            "en": "List my notes and ask the AI to review them"
-          }
-        ]
+        "query": {"en": "Goodbye"},
+        "response": {"en": "Goodbye! Have a great day."}
       }
     ],
     "irrelevant": [
       {
-        "query": {
-          "en": "What's the capital of France?"
-        },
-        "response": {
-          "en": "The capital of France is Paris."
-        }
+        "query": {"en": "What's the weather like today?"},
+        "response": {"en": "I'm sorry, I don't have access to weather data. I can only help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Tell me a joke"
-        },
-        "response": {
-          "en": "Why did the chicken cross the road? To get to the other side!"
-        }
+        "query": {"en": "Send an email to John"},
+        "response": {"en": "I don't have an email tool available. I can only help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "What's the weather like today?"
-        },
-        "response": {
-          "en": "I'm sorry, I don't have access to weather data. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "Search the web for restaurants nearby"},
+        "response": {"en": "I don't have a web search tool available. I can only help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "How do I sort a list in Python?"
-        },
-        "response": {
-          "en": "You can sort a list in Python using the sorted() function or the list.sort() method."
-        }
+        "query": {"en": "Play some music"},
+        "response": {"en": "I don't have a music playback tool. I can help with clock, calendar, translation, notes, and settings instead."}
       },
       {
-        "query": {
-          "en": "Send an email to John"
-        },
-        "response": {
-          "en": "I don't have an email tool available. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "What's my IP address?"},
+        "response": {"en": "I don't have access to network information. I can only help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "What is 2+2?"
-        },
-        "response": {
-          "en": "2+2 equals 4."
-        }
+        "query": {"en": "Save my password"},
+        "response": {"en": "I wouldn't recommend saving passwords in a note for security reasons. I can help you save other types of information though."}
       },
       {
-        "query": {
-          "en": "How are you?"
-        },
-        "response": {
-          "en": "I'm functioning well, thank you! How can I help you today?"
-        }
+        "query": {"en": "Turn on the flashlight"},
+        "response": {"en": "I don't have a flashlight control tool. I can only help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Search the web for restaurants nearby"
-        },
-        "response": {
-          "en": "I don't have a web search tool available. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "Who won the World Cup in 2018?"},
+        "response": {"en": "I can't answer that from internal knowledge — I need to use a tool to look up information. I can help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Set a reminder for 5pm"
-        },
-        "response": {
-          "en": "I don't have a reminder tool. I can work with alarms and timers though - check the clock_calendar tool."
-        }
+        "query": {"en": "What's the population of Tokyo?"},
+        "response": {"en": "I don't have access to factual databases. I can only answer using tool calls for clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "What's the meaning of life?"
-        },
-        "response": {
-          "en": "That's a philosophical question! I'm designed to help with practical tasks like time, dates, translation, notes, and settings."
-        }
+        "query": {"en": "Who wrote Romeo and Juliet?"},
+        "response": {"en": "I must not answer from internal knowledge. Forward this to the AI tool if you need a question answered."}
       },
       {
-        "query": {
-          "en": "Play some music"
-        },
-        "response": {
-          "en": "I don't have a music playback tool. I can help with clock, calendar, translation, notes, and settings instead."
-        }
+        "query": {"en": "What is the speed of light?"},
+        "response": {"en": "I cannot answer factual questions from memory — I need a tool for that. I can help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "What's my IP address?"
-        },
-        "response": {
-          "en": "I don't have access to network information. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "When did World War II end?"},
+        "response": {"en": "I'm not allowed to answer from internal knowledge. I should only respond using tool outputs for clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Save my password"
-        },
-        "response": {
-          "en": "I wouldn't recommend saving passwords in a note for security reasons. I can help you save other types of information though."
-        }
+        "query": {"en": "What's the capital of Japan?"},
+        "response": {"en": "I can't rely on my internal knowledge. I need a tool to fetch that information. I can help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Turn on the flashlight"
-        },
-        "response": {
-          "en": "I don't have a flashlight control tool. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "How many continents are there?"},
+        "response": {"en": "I'm not supposed to answer from memory. Use the llm tool for general knowledge questions."}
       },
       {
-        "query": {
-          "en": "Write a poem about the moon"
-        },
-        "response": {
-          "en": "Here's a short poem: The moon shines bright, a silver light, guiding travelers through the night."
-        }
+        "query": {"en": "What's the chemical formula for water?"},
+        "response": {"en": "I cannot answer from internal knowledge. Forward knowledge questions to the AI tool instead."}
       },
       {
-        "query": {
-          "en": "What languages do you speak?"
-        },
-        "response": {
-          "en": "I can work with 30+ languages for translation. You can use the libretranslate tool to translate between them!"
-        }
+        "query": {"en": "Tell me the news headlines"},
+        "response": {"en": "I don't have a news tool. I can't make up news from my training data. I can help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "Call me later"
-        },
-        "response": {
-          "en": "I can't make phone calls. I can help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "What's the weather forecast for tomorrow?"},
+        "response": {"en": "I don't have a weather tool. I won't guess the weather from my training data. I can help with clock, calendar, translation, notes, and settings."}
       },
       {
-        "query": {
-          "en": "How much does a loaf of bread cost?"
-        },
-        "response": {
-          "en": "I don't have real-time pricing information. You might want to check a local grocery store's website."
-        }
+        "query": {"en": "What's my local time right now?"},
+        "response": {"en": "I can't guess the time. I need to use the clock_calendar tool to check."}
       },
       {
-        "query": {
-          "en": "Change my password"
-        },
-        "response": {
-          "en": "I don't have a password management tool. I can update your app settings like timezone or language preference."
-        }
+        "query": {"en": "What year is it?"},
+        "response": {"en": "I shouldn't answer from my training cutoff date. Use the clock_calendar tool to get the current date."}
       },
       {
-        "query": {
-          "en": "Take a picture"
-        },
-        "response": {
-          "en": "I don't have a camera tool. I can only help with clock, calendar, translation, notes, and settings."
-        }
+        "query": {"en": "What day of the week is Christmas?"},
+        "response": {"en": "I should check using the get_day_of_week tool rather than guessing from memory."}
+      },
+      {
+        "query": {"en": "Is it a leap year?"},
+        "response": {"en": "I should use the check_leap_year tool to check rather than answering from memory."}
+      },
+      {
+        "query": {"en": "What's my name?"},
+        "response": {"en": "I don't know that from memory. Check your settings or notes for stored information."}
+      },
+      {
+        "query": {"en": "Where am I located?"},
+        "response": {"en": "I don't have location access. I can only help with clock, calendar, translation, notes, and settings."}
+      },
+      {
+        "query": {"en": "Can you predict the stock market?"},
+        "response": {"en": "I cannot predict stock prices. I would never make up financial predictions from training data. I can help with clock, calendar, translation, notes, and settings."}
+      },
+      {
+        "query": {"en": "Translate hello to French"},
+        "response": {"en": "I can't translate from memory. I need to use the translate_text tool."}
       }
     ]
   }

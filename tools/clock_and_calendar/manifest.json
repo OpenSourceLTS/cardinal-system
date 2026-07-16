@@ -2,268 +2,278 @@
   "name": "clock_calendar",
   "description": "Time, date, moon, timezone, alarms, timers, events, calendar math.",
   "risk_tier": "SAFE",
-  "actions": [
-    "get",
-    "set",
-    "delete"
-  ],
-  "target_hint": "time, date, moon, timezone, alarm, timer, event",
-  "payload_hint": "value, date, time, or query",
-  "manifest": {
-    "example": {
+  "functions": {
+    "get_time": {
+      "description": "Get the current time",
+      "parameters": {
+        "timezone": { "type": "STRING", "description": "Optional timezone override (e.g., Asia/Dhaka, America/New_York)" }
+      },
+      "required": [],
       "action": "get",
       "target": "time",
-      "payload": ""
+      "payload_expr": "{timezone}",
+      "templates": ["What time is it?", "Tell me the time", "Show me the time", "What's the current time?", "Give me the time", "Time please", "Current time", "wht time iz it", "what time is it in {timezone}", "Time in {timezone}", "Tell me the time in {timezone}"],
+      "examples": { "timezone": ["Asia/Dhaka", "America/New_York", "Europe/London", "Asia/Tokyo", "Australia/Sydney"] }
     },
-    "a@p": {
-      "get": [
-        [
-          "time",
-          "tz (optional)"
-        ],
-        [
-          "date",
-          ""
-        ],
-        [
-          "datetime",
-          "tz (optional)"
-        ],
-        [
-          "timezone",
-          ""
-        ],
-        [
-          "moon",
-          "date (optional)"
-        ],
-        [
-          "season",
-          "date (optional)"
-        ],
-        [
-          "sun",
-          "rise/set date tz"
-        ],
-        [
-          "alarms",
-          ""
-        ],
-        [
-          "timers",
-          ""
-        ],
-        [
-          "stopwatch",
-          ""
-        ],
-        [
-          "events",
-          ""
-        ],
-        [
-          "between",
-          "d1 to d2 (days/weeks/months)"
-        ],
-        [
-          "until",
-          "time/date"
-        ],
-        [
-          "since",
-          "time/date"
-        ],
-        [
-          "date_offset",
-          "date +/-days"
-        ],
-        [
-          "day_of_week",
-          "date"
-        ],
-        [
-          "is_leap_year",
-          "year"
-        ],
-        [
-          "timezone",
-          "src to dst"
-        ],
-        [
-          "calendar",
-          "date to hijri"
-        ]
-      ],
-      "set": [
-        [
-          "alarm",
-          "time label"
-        ],
-        [
-          "timer",
-          "duration"
-        ],
-        [
-          "stopwatch",
-          "start/stop/reset"
-        ],
-        [
-          "event",
-          "desc date time"
-        ]
-      ],
-      "delete": [
-        [
-          "alarm",
-          "id"
-        ],
-        [
-          "timer",
-          "id"
-        ],
-        [
-          "event",
-          "id"
-        ]
-      ]
+    "get_date": {
+      "description": "Get the current date",
+      "parameters": {
+        "timezone": { "type": "STRING", "description": "Optional timezone override" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "date",
+      "payload_expr": "{timezone}",
+      "templates": ["What's the date?", "What is today's date?", "Tell me the date", "Show me the date", "Current date", "What day is it?", "What is {timezone} date?", "Date in {timezone}"],
+      "examples": { "timezone": ["Asia/Dhaka", "America/New_York", "Europe/London"] }
+    },
+    "get_datetime": {
+      "description": "Get the current date and time",
+      "parameters": {
+        "timezone": { "type": "STRING", "description": "Optional timezone override" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "datetime",
+      "payload_expr": "{timezone}",
+      "templates": ["What's the date and time?", "Tell me the date and time", "Current date and time", "What's the full date and time?", "Give me the date and time in {timezone}"],
+      "examples": { "timezone": ["Asia/Dhaka", "America/New_York", "Europe/London"] }
+    },
+    "get_day_of_week": {
+      "description": "Get the day of the week for a date",
+      "parameters": {
+        "date": { "type": "STRING", "description": "Optional date (defaults to today). Format: YYYY-MM-DD or month day" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "day",
+      "payload_expr": "{date}",
+      "templates": ["What day of the week is it?", "What day is today?", "What day was {date}?", "What day of the week is {date}?", "Tell me the day for {date}"],
+      "examples": { "date": ["2025-01-15", "2025-06-01", "2025-12-25", "2025-03-20"] }
+    },
+    "get_timezone_info": {
+      "description": "Get the current timezone",
+      "parameters": {},
+      "required": [],
+      "action": "get",
+      "target": "timezone",
+      "payload_expr": "",
+      "templates": ["What's my timezone?", "Tell me my timezone", "What timezone am I in?", "Show my timezone", "Check my timezone"],
+      "examples": {}
+    },
+    "get_moon_phase": {
+      "description": "Get the current moon phase",
+      "parameters": {
+        "date": { "type": "STRING", "description": "Optional date for moon phase lookup" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "moon",
+      "payload_expr": "{date}",
+      "templates": ["What's the moon phase?", "Show me the moon phase", "Tell me the current moon phase", "What is the moon phase on {date}?", "Moon phase for {date}"],
+      "examples": { "date": ["", "", ""] }
+    },
+    "get_season": {
+      "description": "Get the current season for your location",
+      "parameters": {
+        "location": { "type": "STRING", "description": "Optional location/timezone for season lookup" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "season",
+      "payload_expr": "{location}",
+      "templates": ["What season is it?", "Tell me the current season", "What season is it in {location}?", "Season for {location}", "Is it summer yet?"],
+      "examples": { "location": ["Asia/Dhaka", "Tokyo", "London", "Sydney"] }
+    },
+    "list_alarms": {
+      "description": "List all active alarms",
+      "parameters": {},
+      "required": [],
+      "action": "get",
+      "target": "alarms",
+      "payload_expr": "",
+      "templates": ["List my alarms", "Show my alarms", "What alarms do I have?", "Check my alarms", "Display all alarms"],
+      "examples": {}
+    },
+    "list_timers": {
+      "description": "List all active timers",
+      "parameters": {},
+      "required": [],
+      "action": "get",
+      "target": "timers",
+      "payload_expr": "",
+      "templates": ["List my timers", "Show my timers", "What timers are running?", "Check my timers", "Display all timers"],
+      "examples": {}
+    },
+    "get_stopwatch_status": {
+      "description": "Get the stopwatch status and elapsed time",
+      "parameters": {},
+      "required": [],
+      "action": "get",
+      "target": "stopwatch",
+      "payload_expr": "",
+      "templates": ["What's the stopwatch at?", "Check stopwatch", "Show stopwatch status", "Stopwatch time", "Is the stopwatch running?"],
+      "examples": {}
+    },
+    "list_events": {
+      "description": "List all scheduled events",
+      "parameters": {},
+      "required": [],
+      "action": "get",
+      "target": "events",
+      "payload_expr": "",
+      "templates": ["List my events", "Show my schedule", "What events do I have?", "Check my events", "Display all upcoming events"],
+      "examples": {}
+    },
+    "calculate_duration": {
+      "description": "Calculate the duration between two dates",
+      "parameters": {
+        "start_date": { "type": "STRING", "description": "Start date (YYYY-MM-DD)" },
+        "end_date": { "type": "STRING", "description": "End date (YYYY-MM-DD)" },
+        "unit": { "type": "STRING", "description": "Unit: days, weeks, months, or years (default: days)" }
+      },
+      "required": ["start_date", "end_date"],
+      "action": "get",
+      "target": "between",
+      "payload_expr": "{start_date} to {end_date} {unit}",
+      "templates": ["How many days between {start_date} and {end_date}?", "Duration from {start_date} to {end_date}", "Days between {start_date} and {end_date}", "Calculate weeks between {start_date} and {end_date}"],
+      "examples": { "start_date": ["2025-01-10", "2024-06-15", "2025-03-01"], "end_date": ["2025-01-20", "2024-07-15", "2025-03-31"], "unit": ["days", "weeks", "months"] }
+    },
+    "calculate_time_until": {
+      "description": "Calculate how long until a specific time or date",
+      "parameters": {
+        "target_time": { "type": "STRING", "description": "Target time or date (e.g., 10:00, 10 PM, 2025-12-31)" }
+      },
+      "required": ["target_time"],
+      "action": "get",
+      "target": "until",
+      "payload_expr": "{target_time}",
+      "templates": ["How long until {target_time}?", "Time until {target_time}", "Until {target_time}", "How much time until {target_time}?", "Countdown to {target_time}"],
+      "examples": { "target_time": ["10:00", "2 PM", "2025-12-31", "2025-06-30"] }
+    },
+    "calculate_time_since": {
+      "description": "Calculate how long since a specific time or date",
+      "parameters": {
+        "past_time": { "type": "STRING", "description": "Past time or date (e.g., 08:00, 2025-01-01)" }
+      },
+      "required": ["past_time"],
+      "action": "get",
+      "target": "since",
+      "payload_expr": "{past_time}",
+      "templates": ["How long since {past_time}?", "Time since {past_time}", "Since {past_time}", "How much time has passed since {past_time}?"],
+      "examples": { "past_time": ["08:00", "2025-01-01", "2024-06-01"] }
+    },
+    "calculate_date_offset": {
+      "description": "Calculate a date offset by days from the current date",
+      "parameters": {
+        "date": { "type": "STRING", "description": "Base date (YYYY-MM-DD) or offset like +7 days" },
+        "offset": { "type": "STRING", "description": "Optional: +/- days/weeks/months" }
+      },
+      "required": ["date"],
+      "action": "get",
+      "target": "date_offset",
+      "payload_expr": "{date} {offset}",
+      "templates": ["What is {offset} from {date}?", "Date offset: {offset} from {date}", "Add {offset} to {date}", "{offset} from today", "What is {offset} from today?"],
+      "examples": { "date": ["2025-01-15", "2025-06-01", "2025-12-25"], "offset": ["+7 days", "-3 days", "+1 month", "+2 weeks"] }
+    },
+    "check_leap_year": {
+      "description": "Check if a year is a leap year",
+      "parameters": {
+        "year": { "type": "STRING", "description": "Optional year (defaults to current year)" }
+      },
+      "required": [],
+      "action": "get",
+      "target": "is_leap_year",
+      "payload_expr": "{year}",
+      "templates": ["Is this year a leap year?", "Is {year} a leap year?", "Check if {year} is a leap year", "Leap year check for {year}"],
+      "examples": { "year": ["2024", "2025", "2020"] }
+    },
+    "set_alarm": {
+      "description": "Set an alarm for a specific time",
+      "parameters": {
+        "time": { "type": "STRING", "description": "Alarm time (e.g., 07:00, 2:30 PM)" },
+        "label": { "type": "STRING", "description": "Optional label for the alarm" }
+      },
+      "required": ["time"],
+      "action": "set",
+      "target": "alarm",
+      "payload_expr": "{time} {label}",
+      "templates": ["Set alarm for {time}", "Set an alarm at {time}", "Wake me up at {time}", "Alarm for {time} called {label}", "Set {time} alarm labeled {label}", "Set alarm 4 {time}"],
+      "examples": { "time": ["07:00", "2:30 PM", "06:00", "12:00", "18:30"], "label": ["Wake up", "Meeting", "Lunch", "Medication", ""] }
+    },
+    "set_timer": {
+      "description": "Set a countdown timer",
+      "parameters": {
+        "duration": { "type": "STRING", "description": "Timer duration (e.g., 10 minutes, 30s, 5m, 1h)" },
+        "label": { "type": "STRING", "description": "Optional label for the timer" }
+      },
+      "required": ["duration"],
+      "action": "set",
+      "target": "timer",
+      "payload_expr": "{duration} {label}",
+      "templates": ["Set a timer for {duration}", "Start a {duration} timer", "Countdown {duration}", "Timer {duration} called {label}", "Set timer 4 {duration}"],
+      "examples": { "duration": ["10 minutes", "30s", "5m", "1h", "15 minutes"], "label": ["Pasta", "Tea", "Break", ""] }
+    },
+    "control_stopwatch": {
+      "description": "Start, stop, or reset the stopwatch",
+      "parameters": {
+        "action": { "type": "STRING", "enum": ["start", "stop", "reset"], "description": "Stopwatch action: start, stop, or reset" }
+      },
+      "required": ["action"],
+      "action": "set",
+      "target": "stopwatch",
+      "payload_expr": "{action}",
+      "templates": ["Start stopwatch", "Stop stopwatch", "Reset stopwatch", "Begin timing", "Stop the timer"],
+      "examples": { "action": ["start", "stop", "reset"] }
+    },
+    "schedule_event": {
+      "description": "Schedule a calendar event",
+      "parameters": {
+        "datetime": { "type": "STRING", "description": "Date and time of the event" },
+        "title": { "type": "STRING", "description": "Title/description of the event" }
+      },
+      "required": ["datetime", "title"],
+      "action": "set",
+      "target": "event",
+      "payload_expr": "{datetime} {title}",
+      "templates": ["Schedule {title} on {datetime}", "Add event: {title} at {datetime}", "Create an event for {title} on {datetime}", "Plan {title} on {datetime}", "Remind me of {title} at {datetime}"],
+      "examples": { "datetime": ["tomorrow at 3pm", "Friday at 10am", "2025-06-06 14:00"], "title": ["Team meeting", "Doctor appointment", "Lunch with Sarah"] }
+    },
+    "delete_alarm": {
+      "description": "Delete an alarm by ID",
+      "parameters": {
+        "id": { "type": "STRING", "description": "The alarm ID to delete" }
+      },
+      "required": ["id"],
+      "action": "delete",
+      "target": "alarm",
+      "payload_expr": "{id}",
+      "templates": ["Delete alarm {id}", "Remove alarm {id}", "Cancel alarm {id}", "Clear alarm {id}", "Dismiss alarm {id}"],
+      "examples": { "id": ["abc123", "def456", "xyz789"] }
+    },
+    "delete_timer": {
+      "description": "Delete a timer by ID",
+      "parameters": {
+        "id": { "type": "STRING", "description": "The timer ID to delete" }
+      },
+      "required": ["id"],
+      "action": "delete",
+      "target": "timer",
+      "payload_expr": "{id}",
+      "templates": ["Delete timer {id}", "Remove timer {id}", "Cancel timer {id}", "Stop timer {id}"],
+      "examples": { "id": ["t1a2b3", "t4d5e6", "t7g8h9"] }
+    },
+    "delete_event": {
+      "description": "Delete an event by ID",
+      "parameters": {
+        "id": { "type": "STRING", "description": "The event ID to delete" }
+      },
+      "required": ["id"],
+      "action": "delete",
+      "target": "event",
+      "payload_expr": "{id}",
+      "templates": ["Delete event {id}", "Cancel event {id}", "Remove event {id}", "Clear event {id}"],
+      "examples": { "id": ["ev1a2b", "ev3c4d", "ev5e6f"] }
     }
-  },
-  "templates": {
-    "get": {
-      "en": [
-        "What is the {target}?",
-        "Tell me the {target}",
-        "Show me {target}",
-        "Get the {target}",
-        "I need {target}",
-        "Can you tell me {target}?",
-        "Give me {target} info",
-        "What's the {target}?"
-      ]
-    },
-    "set": {
-      "en": [
-        "Set {target} to {payload}",
-        "Create {target}: {payload}",
-        "Add {target} {payload}",
-        "Schedule {target} {payload}",
-        "Update {target} to {payload}",
-        "Configure {target} as {payload}"
-      ]
-    },
-    "delete": {
-      "en": [
-        "Delete {target}",
-        "Remove {target}",
-        "Clear {target}",
-        "Erase {target}",
-        "Get rid of {target}"
-      ]
-    }
-  },
-  "payload_examples": {
-    "timezone": [
-      "Asia/Dhaka",
-      "America/New_York",
-      "Europe/London",
-      "Asia/Tokyo",
-      "Australia/Sydney"
-    ],
-    "time": [
-      "Asia/Dhaka",
-      "America/New_York",
-      "Europe/London"
-    ],
-    "datetime": [
-      "2025-01-15 14:30",
-      "2025-06-01 09:00",
-      "2025-12-25 18:00",
-      "2025-03-20 07:45"
-    ],
-    "date": [
-      "2025-01-15",
-      "2025-06-01",
-      "2025-12-25",
-      "2025-03-20"
-    ],
-    "moon": [
-      ""
-    ],
-    "season": [
-      ""
-    ],
-    "sun": [
-      ""
-    ],
-    "alarms": [
-      ""
-    ],
-    "timers": [
-      ""
-    ],
-    "stopwatch": [
-      ""
-    ],
-    "events": [
-      ""
-    ],
-    "between": [
-      "2025-01-10 | 2025-01-20",
-      "2025-03-01 | 2025-03-31",
-      "2024-06-15 | 2024-07-15"
-    ],
-    "until": [
-      "2025-12-31",
-      "2025-06-30",
-      "2026-01-01"
-    ],
-    "since": [
-      "2025-01-01",
-      "2024-06-01",
-      "2024-01-01"
-    ],
-    "date_offset": [
-      "+7 days",
-      "-3 days",
-      "+1 month",
-      "+2 weeks"
-    ],
-    "day_of_week": [
-      "2025-01-15",
-      "2025-06-01",
-      "2025-12-25"
-    ],
-    "is_leap_year": [
-      "2024",
-      "2025",
-      "2020"
-    ],
-    "time_format": [
-      "12h",
-      "24h"
-    ],
-    "calendar": [
-      ""
-    ],
-    "alarm": [
-      "07:00",
-      "08:30",
-      "06:00",
-      "12:00",
-      "18:30"
-    ],
-    "timer": [
-      "5 minutes",
-      "10 minutes",
-      "30 seconds",
-      "1 hour",
-      "15 minutes"
-    ],
-    "event": [
-      "meeting tomorrow at 3pm",
-      "lunch at 12:30",
-      "doctor appointment at 10am",
-      "team standup at 9am"
-    ]
   }
 }

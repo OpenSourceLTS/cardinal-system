@@ -15,9 +15,8 @@ else:
 from core.router import Router
 from core.base_tool import ExecutionContext
 from core.parser import CommandNode
-from core.manifest import discover_tools, load_tool_class
+from core.manifest import discover_tools, load_tool_class, resolve_function_call, get_function_registry
 
-# Thread pool for executing batch tool calls in parallel
 _PARALLEL_WORKERS = 4
 _EXECUTOR = ThreadPoolExecutor(max_workers=_PARALLEL_WORKERS)
 
@@ -26,8 +25,6 @@ SERVER_NAME = "cardinal_system_mcp"
 SERVER_VERSION = "0.0.1"
 
 
-# Builds the Router by auto-discovering all tool classes from the filesystem.
-# No hardcoded imports — every tool in tools/*/manifest.json gets registered.
 def _build_registry() -> Router:
     router = Router()
     for data in discover_tools():
@@ -39,45 +36,40 @@ def _build_registry() -> Router:
 _ROUTER = _build_registry()
 
 
-# Builds minimal MCP tool definitions — model is fine-tuned and knows all tools.
-# All tools exposed so LM Studio can route calls.
 def _build_tool_definitions() -> list[dict]:
     defs = []
     for data in discover_tools():
-        acts = data["actions"]
-        vp = data.get("manifest", {}).get("a@p", {})
-        tgts = []
-        for es in vp.values():
-            for e in es:
-                t = e[0] if e else ""
-                if t and t not in tgts:
-                    tgts.append(t)
-        target = {"type": "string"}
-        if tgts:
-            target["enum"] = tgts
-        defs.append({
-            "name": data["name"],
-            "description": ", ".join(acts),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "action": {"type": "string", "enum": acts},
-                    "target": target,
-                    "payload": {"type": "string"}
-                },
-                "required": ["action"]
-            }
-        })
+        functions = data.get("functions", {})
+        for func_name, fn_def in functions.items():
+            params_schema = fn_def.get("parameters", {})
+            properties = {}
+            required = fn_def.get("required", [])
+            for pname, pdef in params_schema.items():
+                properties[pname] = {
+                    "type": pdef.get("type", "string").lower(),
+                }
+                if "description" in pdef:
+                    properties[pname]["description"] = pdef["description"]
+                if "enum" in pdef:
+                    properties[pname]["enum"] = pdef["enum"]
+            defs.append({
+                "name": func_name,
+                "description": fn_def.get("description", data.get("description", "")),
+                "inputSchema": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": list(required) if required else [],
+                }
+            })
     return defs
 
 
 TOOL_DEFINITIONS = _build_tool_definitions()
 
 
-# Routes a structured command through the Router's validation pipeline.
-def _execute_structured(tool_name: str, verb: str, target: str, payload: str) -> dict:
+def _execute_structured(tool_name: str, action: str, target: str, payload: str) -> dict:
     ctx = ExecutionContext()
-    node = CommandNode(verb=verb, tool=tool_name, target=target, payload=payload, meta={}, deps=[])
+    node = CommandNode(action=action, tool=tool_name, target=target, payload=payload, meta={}, deps=[])
     results = _ROUTER.execute_dag([node], ctx)
 
     output_parts = []
@@ -102,7 +94,7 @@ def _execute_structured(tool_name: str, verb: str, target: str, payload: str) ->
                 "value": str(r.value) if hasattr(r, "value") and r.value is not None else None,
                 "error": r.error,
                 "tool": getattr(r, "tool", ""),
-                "verb": getattr(r, "verb", ""),
+                "action": getattr(r, "action", ""),
                 "target": getattr(r, "target", ""),
             }
             for r in results
@@ -111,14 +103,12 @@ def _execute_structured(tool_name: str, verb: str, target: str, payload: str) ->
     }
 
 
-# Sends a JSON-RPC message to stdout for the MCP client to read.
 def _send_message(msg: dict):
     line = json.dumps(msg, ensure_ascii=False)
     sys.stdout.write(line + "\n")
     sys.stdout.flush()
 
 
-# Reads one JSON-RPC message from stdin (sent by the MCP client).
 def _read_message() -> Optional[dict]:
     try:
         line = sys.stdin.readline()
@@ -143,7 +133,6 @@ def _handle_initialize(msg: dict) -> dict:
     }
 
 
-# Returns the full list of tool definitions to the MCP client (e.g., LM Studio).
 def _handle_tools_list(msg: dict) -> dict:
     return {
         "jsonrpc": "2.0",
@@ -159,11 +148,9 @@ def _manifest_for(tool_name: str) -> str:
     return ""
 
 
-# Executes a single tool call and wraps the result in MCP response format.
-# On failure, appends the manifest format hint so the AI sees valid options.
-def _execute_single(tool_name: str, verb: str, target: str, payload: str) -> dict:
+def _execute_single(tool_name: str, action: str, target: str, payload: str) -> dict:
     try:
-        result = _execute_structured(tool_name, verb, target, payload)
+        result = _execute_structured(tool_name, action, target, payload)
         text = result["output"] if result["output"] else (
             "Success" if result["success"] else result["error"] or "No output"
         )
@@ -184,37 +171,30 @@ def _execute_single(tool_name: str, verb: str, target: str, payload: str) -> dic
         }
 
 
-# Handles a tools/call request from the MCP client.
-# Validates required arguments and dispatches execution.
 def _handle_tools_call(msg: dict) -> dict:
     params = msg.get("params", {})
     arguments = params.get("arguments", {})
-    tool_name = params.get("name", "")
-    verb = arguments.get("verb") or arguments.get("action", "")
-    target = arguments.get("target", "")
-    payload = arguments.get("payload", "")
+    func_name = params.get("name", "")
 
-    if not tool_name:
+    if not func_name:
         return {
             "jsonrpc": "2.0",
             "id": msg.get("id"),
-            "error": {"code": -32000, "message": "Missing tool name"}
+            "error": {"code": -32000, "message": "Missing function name"}
         }
-    if not verb:
-        available = ", ".join(d["name"] for d in TOOL_DEFINITIONS)
+
+    tool, action, target, payload = resolve_function_call(func_name, arguments)
+
+    if not tool or not action:
+        registry = get_function_registry()
+        available = ", ".join(sorted(registry.keys()))
         return {
             "jsonrpc": "2.0",
             "id": msg.get("id"),
-            "error": {
-                "code": -32000,
-                "message": f"Missing required argument: verb={verb!r}. "
-                           f"Available tools: {available}"
-            }
+            "error": {"code": -32000, "message": f"Unknown function: '{func_name}'. Available: {available}"}
         }
-    if target is None:
-        target = ""
 
-    result = _execute_single(tool_name, verb, target, payload)
+    result = _execute_single(tool, action, target, payload)
     return {
         "jsonrpc": "2.0",
         "id": msg.get("id"),
@@ -222,8 +202,6 @@ def _handle_tools_call(msg: dict) -> dict:
     }
 
 
-# Executes a batch of tool calls in parallel and returns ordered results.
-# Notifications (messages with no id) are skipped per JSON-RPC spec.
 def _handle_batch(calls: list) -> list:
     if not calls:
         return []
@@ -234,11 +212,9 @@ def _handle_batch(calls: list) -> list:
             return None
         params = call.get("params", {})
         args = params.get("arguments", {})
-        tool_name = params.get("name", "")
-        verb = args.get("verb", "")
-        target = args.get("target", "")
-        payload = args.get("payload", "")
-        result = _execute_single(tool_name, verb, target, payload)
+        func_name = params.get("name", "")
+        tool, action, target, payload = resolve_function_call(func_name, args)
+        result = _execute_single(tool or func_name, action or "", target or "", payload or "")
         return {"jsonrpc": "2.0", "id": call_id, "result": result}
 
     futures = {_EXECUTOR.submit(work, call): i for i, call in enumerate(calls)}
@@ -256,7 +232,6 @@ _HANDLERS = {
 }
 
 
-# Dispatches a single JSON-RPC message to its handler based on method name.
 def _process_single(msg: dict):
     method = msg.get("method", "")
     handler = _HANDLERS.get(method)
@@ -284,14 +259,12 @@ def _process_single(msg: dict):
         })
 
 
-# Main loop: reads JSON-RPC messages from stdin, handles single or batch requests.
 def run_mcp_server():
     while True:
         raw = _read_message()
         if raw is None:
             break
 
-        # JSON-RPC batch request — an array of calls
         if isinstance(raw, list):
             responses = _handle_batch(raw)
             filtered = [r for r in responses if r is not None]

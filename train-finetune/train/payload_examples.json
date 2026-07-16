@@ -66,10 +66,17 @@
       "+1 month",
       "+2 weeks"
     ],
-    "day_of_week": [
-      "2025-01-15",
-      "2025-06-01",
-      "2025-12-25"
+    "day": [
+      ""
+    ],
+    "today": [
+      ""
+    ],
+    "yesterday": [
+      ""
+    ],
+    "tomorrow": [
+      ""
     ],
     "is_leap_year": [
       "2024",
@@ -106,34 +113,50 @@
   },
   "libretranslate": {
     "en": [
-      "Hello world | auto"
+      "Hello world | auto",
+      "Good morning | auto",
+      "How are you? | auto",
+      "Thank you very much | auto",
+      "Please help me | auto",
+      "Nice to meet you | auto"
     ],
     "bn": [
-      "Bonjour le monde | auto"
+      "Bonjour le monde | auto",
+      "Good morning | auto",
+      "How are you today? | auto"
     ],
     "fr": [
-      "Hello world | en"
+      "Hello world | en",
+      "Good morning | en",
+      "What is your name? | en"
     ],
     "ar": [
-      "Hello world | en"
+      "Hello world | en",
+      "Good evening | en"
     ],
     "es": [
-      "Hello world | en"
+      "Hello world | en",
+      "Good afternoon | en",
+      "See you later | en"
     ],
     "de": [
-      "Hello world | en"
+      "Hello world | en",
+      "How much does this cost? | en"
     ],
     "ja": [
-      "Hello world | en"
+      "Hello world | en",
+      "Excuse me | en"
     ],
     "ko": [
       "Hello world | en"
     ],
     "zh": [
-      "Hello world | en"
+      "Hello world | en",
+      "Welcome | en"
     ],
     "hi": [
-      "Hello world | en"
+      "Hello world | en",
+      "Namaste | auto"
     ],
     "pt": [
       "Hello world | en"
@@ -142,7 +165,8 @@
       "Hello world | en"
     ],
     "it": [
-      "Hello world | en"
+      "Hello world | en",
+      "Goodbye | en"
     ],
     "tr": [
       "Hello world | en"
@@ -174,7 +198,14 @@
     "": [
       "Hello world",
       "Bonjour le monde",
-      "Hola mundo"
+      "Hola mundo",
+      "Good morning, how are you?",
+      "Thank you very much!",
+      "Please help me find the station",
+      "What is your name?",
+      "Can you speak English?",
+      "How much does this cost?",
+      "Nice to meet you"
     ]
   },
   "llm": {
@@ -228,15 +259,23 @@
       "Worked on feature X",
       "Fixed bug in login",
       "Reviewed PR #42"
+    ],
+    "": [
+      "my favorite color is blue",
+      "meeting at 3pm tomorrow",
+      "call mom on her birthday",
+      "project deadline is Friday",
+      "buy milk and eggs on the way home",
+      "dentist appointment next Tuesday",
+      "pick up the dry cleaning",
+      "Sarah's birthday is on March 15th"
     ]
   },
   "settings": {
     "timezone": [
       "Asia/Dhaka",
       "America/New_York",
-      "Europe/Berlin",
-      "Asia/Tokyo",
-      "Australia/Sydney"
+      "Europe/Berlin"
     ],
     "time_format": [
       "24h",
@@ -245,47 +284,7 @@
     "spoken_lang": [
       "bn",
       "en",
-      "es",
-      "fr",
-      "de",
-      "ja",
-      "ar"
-    ],
-    "llm_provider": [
-      "openrouter",
-      "openai",
-      "lmstudio",
-      "custom"
-    ],
-    "llm_model": [
-      "anthropic/claude-3-haiku",
-      "openai/gpt-4o",
-      "google/gemma-3-270m-it",
-      "meta-llama/llama-3-70b"
-    ],
-    "llm_api_key": [
-      "sk-llm-test",
-      ""
-    ],
-    "llm_enabled": [
-      "true",
-      "false"
-    ],
-    "llm_base_url": [
-      ""
-    ],
-    "fc_model": [
-      "gemma-3-270m-it",
-      "gemma-2-2b-it",
-      "lfm2.5-230m-fable-5"
-    ],
-    "fc_base_url": [
-      "http://localhost:1234",
-      "http://localhost:1235"
-    ],
-    "fc_api_key": [
-      "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK",
-      ""
+      "es"
     ]
   }
 }

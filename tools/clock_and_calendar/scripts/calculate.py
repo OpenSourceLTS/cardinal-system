@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from core.base_tool import CommandResult
 
 from . import jdn
+from .time_utils import local_now, get_timezone_from_settings
 
 
 def _format_gregorian(year, month, day):
@@ -20,7 +21,7 @@ def handle_calculate(target, payload, metadata):
         return _days_between(p)
     elif t == "age":
         return _age(p)
-    elif t == "day-of-week":
+    elif t in ("day-of-week", "day"):
         return _day_of_week(p)
     elif t == "until":
         return _until(p)
@@ -71,6 +72,10 @@ def _age(payload):
 
 
 def _day_of_week(payload):
+    if not payload:
+        tz = get_timezone_from_settings()
+        now = local_now(tz)
+        payload = f"{now.year:04d}-{now.month:02d}-{now.day:02d}"
     d = jdn.parse_date(payload)
     if not d:
         return CommandResult.fail("Invalid input. Use a date like YYYY-MM-DD or keyword like 'today', 'yesterday', 'tomorrow'.")
@@ -81,7 +86,8 @@ def _until(payload):
     d = jdn.parse_date(payload)
     if not d:
         return CommandResult.fail("Provide date as YYYY-MM-DD")
-    now = datetime.now(timezone.utc)
+    tz = get_timezone_from_settings()
+    now = local_now(tz)
     diff = jdn.gregorian_to_jdn(*d) - jdn.gregorian_to_jdn(now.year, now.month, now.day)
     return CommandResult.ok(f"{abs(diff)} days {'from now' if diff >= 0 else 'ago'}")
 
@@ -129,7 +135,8 @@ def _leap_year(payload):
     elif payload and payload.strip().isdigit():
         y = int(payload.strip())
     else:
-        y = datetime.now(timezone.utc).year
+        tz = get_timezone_from_settings()
+        y = local_now(tz).year
     leap = jdn.is_gregorian_leap(y)
     return CommandResult.ok(f"{y} is{' a leap year' if leap else ' not a leap year'}")
 

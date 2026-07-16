@@ -1,10 +1,10 @@
 """Training Data Generator for FunctionGemma Fine-Tuning.
-
-Generates training_data.jsonl in native FunctionGemma format.
+Generates training_data.jsonl in google/mobile-actions format
+with specific function names and semantically meaningful parameter names.
 
 Usage:
     python generate_training_data.py
-    python generate_training_data.py --lang bn,en,hi --templates 3
+    python generate_training_data.py --lang bn,en,hi --templates-per-fn 3
     python generate_training_data.py --output-dir /path/to/output
 """
 
@@ -13,6 +13,7 @@ import json
 import random
 import re
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 LANGUAGES = [
@@ -28,24 +29,41 @@ LANGUAGES = [
     ("tr", "Turkish"), ("ur", "Urdu"), ("vi", "Vietnamese"),
 ]
 
+_DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+_EPOCH = datetime(2024, 1, 1)
+_EPOCH_END = datetime(2027, 1, 1)
+
 
 def load_json(path: Path) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def load_manifests(manifests_dir: Path) -> list:
-    manifests = []
+def discover_functions(manifests_dir: Path) -> list[dict]:
+    functions = []
     for manifest_path in sorted(manifests_dir.glob("*/manifest.json")):
         data = load_json(manifest_path)
-        vp = data.get("manifest", {}).get("a@p", {})
-        manifests.append({
-            "name": data.get("name", manifest_path.parent.stem),
-            "description": data.get("description", ""),
-            "actions": data.get("actions", []),
-            "a@p": vp,
-        })
-    return manifests
+        name = data.get("name", manifest_path.parent.stem)
+        func_dict = data.get("functions", {})
+        for func_name, fn_def in func_dict.items():
+            functions.append({
+                "tool": name,
+                "func_name": func_name,
+                "description": fn_def.get("description", ""),
+                "parameters": fn_def.get("parameters", {}),
+                "required": fn_def.get("required", []),
+                "templates": fn_def.get("templates", []),
+                "examples": fn_def.get("examples", {}),
+            })
+    return functions
+
+
+def load_multi_tool_config(manifests_dir: Path) -> dict:
+    llm_manifest = manifests_dir / "llm" / "manifest.json"
+    if llm_manifest.exists():
+        data = load_json(llm_manifest)
+        return data.get("multi_tool", {})
+    return {}
 
 
 def filter_languages(lang_filter: str) -> list:
@@ -56,217 +74,207 @@ def filter_languages(lang_filter: str) -> list:
     return [(c, lang_map.get(c, c)) for c in codes if c]
 
 
-def resolve_payload(examples: dict, tool_name: str, target: str, default: str = "value") -> str:
-    val = examples.get(tool_name, {}).get(target, default)
-    if isinstance(val, list):
-        return random.choice(val)
-    return val
+def random_datetime():
+    delta = _EPOCH_END - _EPOCH
+    rand_secs = random.randint(0, int(delta.total_seconds()))
+    return _EPOCH + timedelta(seconds=rand_secs)
 
 
-# ── FunctionGemma format builders ──────────────────────────────────────────
+def build_developer_content(dt: datetime) -> str:
+    day_name = _DAY_NAMES[dt.weekday()]
+    return (
+        f"Current date and time given in YYYY-MM-DDTHH:MM:SS format: {dt.strftime('%Y-%m-%dT%H:%M:%S')}\n"
+        f"Day of week is {day_name}\n"
+        f"You are a model that can do function calling with the following functions\n"
+    )
 
-def escape(val: str) -> str:
-    return f"<escape>{val}<escape>"
 
-
-def build_tools_schema(manifests: list) -> list:
+def build_tools_schema(functions: list[dict]) -> list:
     tools = []
-    for m in manifests:
-        actions = m["actions"]
-        tools.append({
-            "type": "function",
+    for fn in functions:
+        params_schema = fn["parameters"]
+        properties = {}
+        required = fn["required"]
+        for pname, pdef in params_schema.items():
+            prop = {"type": pdef.get("type", "STRING")}
+            if "description" in pdef:
+                prop["description"] = pdef["description"]
+            if "enum" in pdef:
+                prop["enum"] = pdef["enum"]
+            properties[pname] = prop
+        func_def = {
             "function": {
-                "name": m["name"],
-                "description": m.get("description", ""),
+                "name": fn["func_name"],
+                "description": fn["description"],
                 "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "action": {
-                            "type": "string",
-                            "enum": actions,
-                            "description": f"Action verb. One of: {', '.join(actions)}"
-                        },
-                        "target": {"type": "string", "description": "Target resource"},
-                        "payload": {"type": "string", "description": "Payload data"}
-                    },
-                    "required": ["action"]
-                }
+                    "type": "OBJECT",
+                    "properties": properties,
+                },
             }
-        })
+        }
+        if required:
+            func_def["function"]["parameters"]["required"] = list(required)
+        tools.append(func_def)
     return tools
 
 
-def build_call_str(tool_name: str, args: dict) -> str:
-    param_parts = []
-    for key, value in args.items():
-        if value is not None and value != "":
-            param_parts.append(f"{key}:{escape(value)}")
-    return f"<start_function_call>call:{tool_name}{{{','.join(param_parts)}}}<end_function_call>"
+def build_tool_calls(calls: list) -> list:
+    result = []
+    for name, args in calls:
+        filtered = {k: v for k, v in args.items() if v is not None and v != ""}
+        result.append({
+            "function": {
+                "name": name,
+                "arguments": filtered,
+            }
+        })
+    return result
 
-
-# ── Parameter mapping ──────────────────────────────────────────────────────
-# All tools use the same 3-param schema: action, target, payload.
-# The a@p entry provides target and payload_format; payload_val comes from examples.
-
-def map_params(tool_name: str, action: str, target: str, payload_val: str, payload_format: str) -> dict:
-    params = {"action": action, "target": target}
-    if payload_val and payload_val.strip() and payload_val != "value":
-        params["payload"] = payload_val
-    return params
-
-
-# ── CSV generator ──────────────────────────────────────────────────────────
 
 def generate_single_records(
-    manifests: list,
-    templates: dict,
-    payload_examples: dict,
+    functions: list[dict],
     languages: list,
     max_templates: int,
 ) -> list:
-    """Generate single-tool-call records: list of [user_text, tool_name, args_dict]."""
     rows = []
-    warnings = 0
+    for fn in functions:
+        func_name = fn["func_name"]
+        templates = fn["templates"]
+        examples = fn["examples"]
+        params = fn["parameters"]
+        required = set(fn["required"])
 
-    for manifest in manifests:
-        tool_name = manifest["name"]
-        vp = manifest["a@p"]
+        for lang_code, _ in languages:
+            tmpls = templates if lang_code == "en" else templates
 
-        for action, targets in vp.items():
-            action_templates = templates.get(action, templates.get("get", {}))
+            for template in tmpls[:max_templates]:
+                placeholders = [m.group(1) for m in re.finditer(r'\{(\w+)\}', template)]
 
-            for target_entry in targets:
-                target = target_entry[0] if target_entry else ""
-                payload_format = target_entry[1] if len(target_entry) > 1 else ""
+                param_values = {}
+                for pname in placeholders:
+                    if pname in examples and examples[pname]:
+                        clean_vals = [v for v in examples[pname] if v != ""]
+                        if clean_vals:
+                            param_values[pname] = random.choice(clean_vals)
+                        else:
+                            param_values[pname] = ""
+                    else:
+                        param_values[pname] = ""
 
-                for lang_code, _ in languages:
-                    tmpls = action_templates.get(lang_code, action_templates.get("en", []))
-                    if not tmpls:
-                        tmpls = action_templates.get("en", [f"{action} {target}"])
-                        warnings += 1
+                text = template
+                for pname, pval in param_values.items():
+                    text = text.replace("{" + pname + "}", pval)
 
-                    for template in tmpls[:max_templates]:
-                        text = template
-                        if "{target}" in text:
-                            text = text.replace("{target}", target if target else tool_name)
-                        if "{payload}" in text:
-                            pl = resolve_payload(payload_examples, tool_name, target, "value")
-                            text = text.replace("{payload}", pl)
+                args = dict(param_values)
+                for pname in list(args.keys()):
+                    if pname not in required and not args[pname]:
+                        del args[pname]
 
-                        pl = resolve_payload(payload_examples, tool_name, target)
-                        args = map_params(tool_name, action, target, pl, payload_format)
-                        rows.append([text, tool_name, args])
+                rows.append([text, func_name, args])
 
-    if warnings:
-        print(f"  Warnings: {warnings} missing language templates (fell back to en)")
     return rows
 
 
-# ── JSONL generator ────────────────────────────────────────────────────────
-
-DEVELOPER_CONTENT = (
-    "You are Cardinal, an AI assistant with tools.\n"
-    "Directives:\n"
-    "- Use tool calls to fetch dynamic information or perform state changes.\n"
-    "- Never answer from internal knowledge. Base responses on tool outputs.\n"
-    "- For conversation or complex reasoning, forward to the 'llm' tool."
-)
-
-
 def generate_jsonl(
-    manifests: list,
+    functions: list[dict],
     single_rows: list,
     languages: list,
     multi_config: dict,
 ) -> list:
-    tools_schema = build_tools_schema(manifests)
+    tools_schema = build_tools_schema(functions)
     records = []
     lang_codes = [lc for lc, _ in languages]
 
+    def shuffled_tools():
+        return random.sample(tools_schema, len(tools_schema))
+
     def add_record(phrase: str, calls: list):
-        call_contents = "\n".join(build_call_str(name, args) for name, args in calls)
+        dt = random_datetime()
+        dev_content = build_developer_content(dt)
+        tool_calls = build_tool_calls(calls)
         records.append({
+            "metadata": "train",
+            "tools": shuffled_tools(),
             "messages": [
-                {"role": "developer", "content": DEVELOPER_CONTENT},
+                {"role": "developer", "content": dev_content},
                 {"role": "user", "content": phrase},
-                {"role": "assistant", "content": call_contents},
+                {"role": "assistant", "tool_calls": tool_calls},
             ],
-            "tools": tools_schema,
         })
 
-    for text, tool_name, args in single_rows:
-        add_record(text, [(tool_name, args)])
+    for text, func_name, args in single_rows:
+        add_record(text, [(func_name, args)])
+
+    def process_multi_entry(tools_array):
+        phrases = tools_array[-1] if tools_array else {}
+        phrase = phrases.get("en", "") if isinstance(phrases, dict) else ""
+        items = tools_array[:-1]
+        calls = [(items[i], items[i + 1]) for i in range(0, len(items), 2)]
+        return phrase, calls
 
     for entry in multi_config.get("parallel", []):
-        a, b, c, d, phrases = entry["tools"]
+        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
-            add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d)])
+            add_record(phrase, calls)
 
     for entry in multi_config.get("sequential", []):
-        a, b, c, d, phrases = entry["tools"]
+        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
-            add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d)])
+            add_record(phrase, calls)
 
     for entry in multi_config.get("triple", []):
-        a, b, c, d, e, f, phrases = entry["tools"]
+        phrase, calls = process_multi_entry(entry["tools"])
         for code in lang_codes:
-            add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d), (e, f)])
+            add_record(phrase, calls)
 
     for entry in multi_config.get("no_tool", []):
-        queries = entry["query"]
-        responses = entry["response"]
+        queries = entry.get("query", {})
+        responses = entry.get("response", {})
         for code in lang_codes:
             query = queries.get(code, queries.get("en", ""))
             response = responses.get(code, responses.get("en", ""))
             if not query or not response:
                 continue
+            dt = random_datetime()
+            dev_content = build_developer_content(dt)
             records.append({
+                "metadata": "train",
+                "tools": shuffled_tools(),
                 "messages": [
-                    {"role": "developer", "content": DEVELOPER_CONTENT},
+                    {"role": "developer", "content": dev_content},
                     {"role": "user", "content": query},
                     {"role": "assistant", "content": response},
                 ],
-                "tools": tools_schema,
             })
 
-    # Legacy alias for "irrelevant"
     for entry in multi_config.get("irrelevant", []):
-        queries = entry["query"]
-        responses = entry["response"]
+        queries = entry.get("query", {})
+        responses = entry.get("response", {})
         for code in lang_codes:
             query = queries.get(code, queries.get("en", ""))
             response = responses.get(code, responses.get("en", ""))
             if not query or not response:
                 continue
+            dt = random_datetime()
+            dev_content = build_developer_content(dt)
             records.append({
+                "metadata": "train",
+                "tools": shuffled_tools(),
                 "messages": [
-                    {"role": "developer", "content": DEVELOPER_CONTENT},
+                    {"role": "developer", "content": dev_content},
                     {"role": "user", "content": query},
                     {"role": "assistant", "content": response},
                 ],
-                "tools": tools_schema,
             })
-
-    for entry in multi_config.get("llm_sequential", []):
-        a, b, c, d, phrases = entry["tools"]
-        for code in lang_codes:
-            add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d)])
-
-    for entry in multi_config.get("llm_parallel", []):
-        a, b, c, d, phrases = entry["tools"]
-        for code in lang_codes:
-            add_record(phrases.get(code, phrases.get("en", "")), [(a, b), (c, d)])
 
     random.shuffle(records)
     return records
 
 
-# ── CLI ────────────────────────────────────────────────────────────────────
-
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate FunctionGemma training data")
     parser.add_argument("--lang", help="Comma-separated language codes (default: all 30)")
-    parser.add_argument("--templates", type=int, default=10, help="Max templates per combo (default: 10)")
+    parser.add_argument("--templates-per-fn", type=int, default=12, help="Max templates per function (default: 12)")
     parser.add_argument("--output-dir", help="Output directory (default: script dir)")
     parser.add_argument("--manifests-dir", help="Manifests directory (default: ../../tools)")
     return parser.parse_args()
@@ -280,33 +288,29 @@ def main():
     manifests_dir = Path(args.manifests_dir) if args.manifests_dir else base.parent.parent / "tools"
     languages = filter_languages(args.lang)
 
-    # Step 0: Combine manifests into config files
-    from combine import combine as combine_tool
-    combine_tool(manifests_dir, out_dir)
-
     print(f"Loading manifests from {manifests_dir}...")
-    manifests = load_manifests(manifests_dir)
-    if not manifests:
-        print("ERROR: No manifests found"); sys.exit(1)
-    print(f"Tools: {[m['name'] for m in manifests]}")
+    functions = discover_functions(manifests_dir)
+    if not functions:
+        print("ERROR: No functions found in manifests"); sys.exit(1)
+    print(f"Functions: {len(functions)}")
+    for fn in functions:
+        print(f"  {fn['tool']}.{fn['func_name']}")
+
     print(f"Languages: {len(languages)} ({', '.join(lc for lc, _ in languages)})")
 
-    templates = load_json(out_dir / "templates.json")
-    print(f"Templates: {len(templates)} actions")
-
-    payload_examples = load_json(out_dir / "payload_examples.json")
-
-    single_rows = generate_single_records(manifests, templates, payload_examples, languages, args.templates)
+    single_rows = generate_single_records(functions, languages, args.templates_per_fn)
     print(f"Single-call records: {len(single_rows)}")
 
-    multi_config = load_json(out_dir / "multi_tool_config.json")
-    jsonl_records = generate_jsonl(manifests, single_rows, languages, multi_config)
+    multi_config = load_multi_tool_config(manifests_dir)
+    multi_counts = {k: len(v) for k, v in multi_config.items()}
+    print(f"Multi-tool config: {multi_counts}")
+
+    jsonl_records = generate_jsonl(functions, single_rows, languages, multi_config)
     jsonl_path = out_dir / "training_data.jsonl"
     with open(jsonl_path, "w", encoding="utf-8") as f:
         for r in jsonl_records:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
     print(f"JSONL: {len(jsonl_records)} records -> {jsonl_path}")
-
     print(f"\nDone! {len(jsonl_records)} JSONL records")
 
 

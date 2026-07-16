@@ -9,11 +9,11 @@ class LibreTranslateTool(BaseTool):
     def manifest(self):
         return ToolManifest.from_json(load_manifest("libretranslate"))
 
-    def execute(self, verb, target, payload, metadata, ctx):
-        if verb == "translate":
+    def execute(self, action, target, payload, metadata, ctx):
+        if action == "translate":
             return handlers.handle_translate(target, payload, ctx)
-        elif verb == "detect":
+        elif action == "detect":
             return handlers.handle_detect(target, payload, ctx)
-        elif verb == "list":
+        elif action == "list":
             return handlers.handle_list(target, payload, ctx)
-        return CommandResult.fail(f"Verb '{verb}' not supported by {self.manifest.name}")
+        return CommandResult.fail(f"Verb '{action}' not supported by {self.manifest.name}")

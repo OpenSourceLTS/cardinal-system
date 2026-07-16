@@ -29,66 +29,69 @@ def _get_api_key() -> str:
 
 
 def _get_model() -> str:
-    return _read_settings().get("fc_model", "functiongemma-finetuned")
+    return _read_settings().get("fc_model", "functiongemma-finetuned@f16")
 
 
 def _get_forward_model() -> str:
-    return _read_settings().get("llm_model", "qwen3-0.6b-heretic-abliterated-uncensored")
+    return "qwen3-0.6b-heretic-abliterated-uncensored"
 
 
 def _get_forward_base_url() -> str:
-    return _read_settings().get("llm_base_url", "http://localhost:1235")
+    return "http://localhost:1235"
 
 
 def _get_forward_api_key() -> str:
-    return _read_settings().get("llm_api_key", "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK")
+    return "sk-lm-PHYEPjg2:mVmPUGvdDo0PYzbjsYYK"
 
 
 def _build_tools_spec() -> list[dict]:
-    from core.manifest import discover_tools as _discover_tools
+    from core.manifest import discover_tools
 
     specs = []
-    for t in _discover_tools():
-        vp = t.get("manifest", {}).get("a@p", {})
-        all_targets = []
-        for entries in vp.values():
-            for e in entries:
-                tg = e[0] if e else ""
-                if tg and tg not in all_targets:
-                    all_targets.append(tg)
-        props = {
-            "action": {"type": "string", "enum": t["actions"]},
-            "target": {"type": "string"},
-            "payload": {"type": "string"},
-        }
-        if all_targets:
-            props["target"] = {"type": "string", "enum": all_targets}
-        specs.append({
-            "type": "function",
-            "function": {
-                "name": t["name"],
-                "description": t.get("description", ""),
-                "parameters": {
-                    "type": "object",
-                    "properties": props,
-                    "required": ["action"],
+    for data in discover_tools():
+        functions = data.get("functions", {})
+        for func_name, fn_def in functions.items():
+            params_schema = fn_def.get("parameters", {})
+            properties = {}
+            required = fn_def.get("required", [])
+            for pname, pdef in params_schema.items():
+                prop = {"type": pdef.get("type", "STRING")}
+                if "description" in pdef:
+                    prop["description"] = pdef["description"]
+                if "enum" in pdef:
+                    prop["enum"] = pdef["enum"]
+                properties[pname] = prop
+            specs.append({
+                "type": "function",
+                "function": {
+                    "name": func_name,
+                    "description": fn_def.get("description", data.get("description", "")),
+                    "parameters": {
+                        "type": "OBJECT",
+                        "properties": properties,
+                    },
                 },
-            },
-        })
+            })
+            if required:
+                specs[-1]["function"]["parameters"]["required"] = list(required)
     return specs
 
 
 _TOOLS_SPEC = _build_tools_spec()
 
-_SYSTEM_PROMPT = (
-    "You are Cardinal, an AI assistant with tools.\n"
-    "Directives:\n"
-    "- Use tool calls to fetch dynamic information or perform state changes.\n"
-    "- Never answer from internal knowledge. Base responses on tool outputs.\n"
-    "- For conversation or complex reasoning, forward to the 'llm' tool."
-)
+_USER_SETTINGS = {"timezone", "time_format", "spoken_lang"}
 
-# FunctionGemma native format regex
+
+def _build_system_prompt() -> str:
+    prefs = _read_settings()
+    parts = ["You are Cardinal, an AI assistant."]
+    user_prefs = {k: v for k, v in prefs.items() if k in _USER_SETTINGS}
+    if user_prefs:
+        pair_str = "; ".join(f"{k}={v}" for k, v in user_prefs.items())
+        parts.append(f"User preferences: {pair_str}")
+    return "\n".join(parts)
+
+
 _FG_CALL_RE = re.compile(
     r"<start_function_call>call:(?P<tool>\w+)\{(?P<args>[^}]*)\}<end_function_call>"
 )
@@ -97,15 +100,17 @@ _FG_CALL_RE = re.compile(
 def _parse_fg(text: str) -> list[dict]:
     calls = []
     for match in _FG_CALL_RE.finditer(text):
-        tool = match.group("tool")
+        func_name = match.group("tool")
         args = {}
-        for part in match.group("args").split(","):
-            part = part.strip()
-            if ":" not in part:
-                continue
-            k, _, v = part.partition(":")
-            args[k.strip()] = v.strip().replace("<escape>", "")
-        calls.append({"tool": tool, "arguments": args})
+        raw_args = match.group("args").strip()
+        if raw_args:
+            for part in raw_args.split(","):
+                part = part.strip()
+                if ":" not in part:
+                    continue
+                k, _, v = part.partition(":")
+                args[k.strip()] = v.strip().replace("<escape>", "")
+        calls.append({"function": func_name, "arguments": args})
     return calls
 
 
@@ -156,7 +161,7 @@ class CardinalSystemEngine:
 
         try:
             messages = [
-                {"role": "developer", "content": _SYSTEM_PROMPT},
+                {"role": "developer", "content": _build_system_prompt()},
                 {"role": "user", "content": user_input},
             ]
             output = _chat_completion(messages, model, url, key, tools=_TOOLS_SPEC)
@@ -166,6 +171,8 @@ class CardinalSystemEngine:
             return {"success": False, "error": "LM Studio request timed out"}
         except Exception as e:
             return {"success": False, "error": f"LM Studio error: {e}"}
+
+        from core.manifest import resolve_function_call
 
         fg_calls = _parse_fg(output)
 
@@ -180,26 +187,28 @@ class CardinalSystemEngine:
 
         tool_results = []
         for call in fg_calls:
-            tool_name = call["tool"]
+            func_name = call["function"]
             args = call["arguments"]
-            payload = args.get("payload", "")
-            if payload == "$prev":
-                payload = ""
-            result = _execute_structured(
-                tool_name,
-                args.get("action", ""),
-                args.get("target", ""),
-                payload,
-            )
+            tool, action, target, payload = resolve_function_call(func_name, args)
+            if not tool:
+                tool_results.append({
+                    "tool": func_name,
+                    "arguments": args,
+                    "output": "",
+                    "error": f"Unknown function: '{func_name}'",
+                })
+                continue
+            result = _execute_structured(tool, action, target, payload)
             tool_results.append({
-                "tool": tool_name,
+                "tool": func_name,
                 "arguments": args,
                 "output": result.get("output", ""),
                 "error": result.get("error"),
             })
 
         for i, call in enumerate(fg_calls):
-            if call["tool"] == "llm" and tool_results[i].get("output"):
+            func_name = call["function"]
+            if func_name == "forward_to_ai" and tool_results[i].get("output"):
                 return {
                     "success": True,
                     "response": tool_results[i]["output"],
@@ -215,7 +224,6 @@ class CardinalSystemEngine:
                 "results": tool_results,
             }
 
-        # Return raw tool result (FG is a dispatcher, not a chat model)
         return {
             "success": True,
             "response": tool_results[0].get("output", str(tool_results)),

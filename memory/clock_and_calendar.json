@@ -12,6 +12,30 @@
       "hour": 18,
       "minute": 30,
       "label": ""
+    },
+    {
+      "id": "7f05d8f6",
+      "hour": 12,
+      "minute": 0,
+      "label": ""
+    },
+    {
+      "id": "da24021c",
+      "hour": 6,
+      "minute": 0,
+      "label": ""
+    },
+    {
+      "id": "57c98829",
+      "hour": 6,
+      "minute": 0,
+      "label": ""
+    },
+    {
+      "id": "dae3b089",
+      "hour": 12,
+      "minute": 0,
+      "label": ""
     }
   ],
   "timers": [],

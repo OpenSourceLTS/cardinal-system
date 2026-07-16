@@ -9,7 +9,7 @@ class LlmTool(BaseTool):
     def manifest(self):
         return ToolManifest.from_json(load_manifest("llm"))
 
-    def execute(self, verb, target, payload, metadata, ctx):
-        if verb == "forward":
+    def execute(self, action, target, payload, metadata, ctx):
+        if action == "forward":
             return handlers.handle_forward(target, payload, metadata, ctx)
-        return CommandResult.fail(f"Verb '{verb}' not supported by {self.manifest.name}")
+        return CommandResult.fail(f"Verb '{action}' not supported by {self.manifest.name}")

@@ -8,7 +8,25 @@
       "I need {target}",
       "Can you tell me {target}?",
       "Give me {target} info",
-      "What's the {target}?"
+      "What's the {target}?",
+      "Check the {target}",
+      "What's today's {target}?",
+      "Look up {target}",
+      "Find out {target}",
+      "I'd like to know {target}",
+      "Could you check {target}?",
+      "Do you know what {target} it is?",
+      "wht iz the {target}",
+      "tel me {target}",
+      "gimme the {target}",
+      "whts {target}",
+      "i wana know {target}",
+      "What is {target}",
+      "Tell me what {target} is",
+      "Give me {target}'s date",
+      "wht is {target}",
+      "wat is {target} date",
+      "tel me {target}s date"
     ]
   },
   "set": {
@@ -18,7 +36,16 @@
       "Add {target} {payload}",
       "Schedule {target} {payload}",
       "Update {target} to {payload}",
-      "Configure {target} as {payload}"
+      "Configure {target} as {payload}",
+      "Wake me up at {payload}",
+      "Set an alarm for {payload}",
+      "Start a {target} for {payload}",
+      "Put on a {target}: {payload}",
+      "Arrange a {target}: {payload}",
+      "Plan {target}: {payload}",
+      "set alarm 4 {payload}",
+      "set timer 4 {payload}",
+      "remind me @ {payload}"
     ]
   },
   "delete": {
@@ -27,21 +54,44 @@
       "Remove {target}",
       "Clear {target}",
       "Erase {target}",
-      "Get rid of {target}"
+      "Get rid of {target}",
+      "Cancel {target}",
+      "Dismiss {target}",
+      "Stop {target}"
     ]
   },
   "translate": {
     "en": [
       "Translate to {target}: {payload}",
       "What is {payload} in {target}?",
-      "Translate {payload} into {target}"
+      "Translate {payload} into {target}",
+      "How do you say {payload} in {target}?",
+      "Say {payload} in {target}",
+      "What's the {target} word for {payload}?",
+      "Tell me how to say {payload} in {target}",
+      "Give me the {target} translation of {payload}",
+      "Can you say {payload} in {target}?",
+      "I need this in {target}: {payload}",
+      "Convert {payload} to {target}",
+      "Put {payload} into {target}",
+      "tranzlate 2 {target}: {payload}",
+      "how u say {payload} in {target}",
+      "say {payload} in {target} plz",
+      "whts {payload} in {target}"
     ]
   },
   "detect": {
     "en": [
       "What language is this: {payload}",
       "Detect the language: {payload}",
-      "Identify the language of: {payload}"
+      "Identify the language of: {payload}",
+      "Tell me what language this is: {payload}",
+      "Which language is {payload}?",
+      "Figure out the language: {payload}",
+      "Name the language of {payload}",
+      "wht lang iz {payload}",
+      "wht language is dis: {payload}",
+      "tell me the lang of {payload}"
     ]
   },
   "list": {
@@ -50,7 +100,12 @@
       "Show me {target}",
       "What {target} do I have?",
       "Display all {target}",
-      "Show all {target}"
+      "Show all {target}",
+      "What {target} are available?",
+      "Give me the list of {target}",
+      "Enumerate the {target}",
+      "wat {target} u got",
+      "list available {target}"
     ]
   },
   "forward": {
@@ -62,7 +117,26 @@
       "Let the AI handle this: {payload}",
       "Tell the AI {payload}",
       "Route to AI: {payload}",
-      "Forward to AI for: {payload}"
+      "Forward to AI for: {payload}",
+      "{payload}",
+      "Help me with {payload}",
+      "Tell me {payload}",
+      "I want to know {payload}",
+      "Can you help me {payload}",
+      "I need help with {payload}",
+      "I'm curious about {payload}",
+      "Explain {payload} to me",
+      "Give me advice on {payload}",
+      "I have a question: {payload}",
+      "Can you answer this: {payload}",
+      "I'd like to ask about {payload}",
+      "Could you help with {payload}",
+      "Let me ask: {payload}",
+      "i need {payload}",
+      "can u {payload}",
+      "help {payload}",
+      "tell me {payload}",
+      "i wana know {payload}"
     ]
   },
   "read": {
@@ -71,7 +145,10 @@
       "Open {target}",
       "Show me {target}",
       "View {target}",
-      "Display {target}"
+      "Display {target}",
+      "Let me see {target}",
+      "Pull up {target}",
+      "Show the content of {target}"
     ]
   },
   "save": {
@@ -80,7 +157,21 @@
       "Create note {target} with {payload}",
       "Write {target}: {payload}",
       "Store {target}: {payload}",
-      "Save to {target}: {payload}"
+      "Save to {target}: {payload}",
+      "Remember: {payload}",
+      "Make a note: {payload}",
+      "Take note: {payload}",
+      "Save this: {payload}",
+      "Record: {payload}",
+      "Keep this: {payload}",
+      "Jot this down: {payload}",
+      "Note this down: {payload}",
+      "Capture this: {payload}",
+      "Put this in a note: {payload}",
+      "remembr: {payload}",
+      "memorize: {payload}",
+      "dont 4get: {payload}",
+      "write dis down: {payload}"
     ]
   },
   "append": {
@@ -89,7 +180,10 @@
       "Add to {target}: {payload}",
       "Add more to {target}: {payload}",
       "Update {target} with {payload}",
-      "Insert into {target}: {payload}"
+      "Insert into {target}: {payload}",
+      "Add this to {target}: {payload}",
+      "Extend {target} with {payload}",
+      "Supplement {target}: {payload}"
     ]
   },
   "change": {
@@ -97,14 +191,20 @@
       "In {target}: {payload}",
       "Change {target}: {payload}",
       "Update {target}: {payload}",
-      "Modify {target}: {payload}"
+      "Modify {target}: {payload}",
+      "Edit {target}: {payload}",
+      "Revise {target}: {payload}",
+      "Alter {target}: {payload}"
     ]
   },
   "rename": {
     "en": [
       "Rename {target} to {payload}",
       "Change {target} name to {payload}",
-      "Rename {target} as {payload}"
+      "Rename {target} as {payload}",
+      "Relabel {target} to {payload}",
+      "Re-title {target}: {payload}",
+      "Name {target} as {payload}"
     ]
   },
   "search": {
@@ -113,7 +213,13 @@
       "Find {payload}",
       "Look up {payload}",
       "Search {target} for {payload}",
-      "Find {payload} in {target}"
+      "Find {payload} in {target}",
+      "Look through {target} for {payload}",
+      "Dig up {payload}",
+      "Locate {payload}",
+      "find {payload}",
+      "look 4 {payload}",
+      "seach {payload}"
     ]
   }
 }

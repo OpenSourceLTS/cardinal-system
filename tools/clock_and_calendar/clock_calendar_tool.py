@@ -17,22 +17,20 @@ class ClockCalendarTool(BaseTool):
     def manifest(self):
         return ToolManifest.from_json(load_manifest("clock_calendar"))
 
-    def execute(self, verb, target, payload, metadata, ctx):
+    def execute(self, action, target, payload, metadata, ctx):
         t = target.lower().strip() if target else ""
         p = (payload or "").strip()
 
-        if verb == "get":
+        if action == "get":
             if t in ("alarms", "alarm", "timer", "timers", "stopwatch", "events", "event"):
                 return timer_handlers.handle_get(target, payload, metadata, ctx)
             if t in ("moon", "season", "phases", "moon-phase", "moon-phases"):
                 return forecast_handler.handle_forecast(t, p, metadata)
             if t == "sun":
                 return _handle_sun(p, metadata, ctx)
-            if t in ("date", "today"):
-                from datetime import datetime, timezone
-                now = datetime.now(timezone.utc)
-                return CommandResult.ok(f"{now.year:04d}-{now.month:02d}-{now.day:02d}")
-            if t in ("day_of_week", "date_offset", "is_leap_year"):
+            if t in ("date", "today", "yesterday", "tomorrow"):
+                return get_handler.handle_get(target, payload, metadata, ctx)
+            if t in ("day", "date_offset", "is_leap_year"):
                 mapped = t.replace("_", "-")
                 return calendar_calculate.handle_calculate(mapped, p, metadata)
             if t == "between":
@@ -54,7 +52,7 @@ class ClockCalendarTool(BaseTool):
                 return calendar_convert.handle_convert("time-format", payload, metadata)
             return get_handler.handle_get(target, payload, metadata, ctx)
 
-        elif verb == "set":
+        elif action == "set":
             if t in ("alarm", "timer", "stopwatch", "event"):
                 if t == "alarm" and "|" in payload:
                     time_part, label_part = payload.split("|", 1)
@@ -62,10 +60,10 @@ class ClockCalendarTool(BaseTool):
                 return timer_handlers.handle_set(target, payload, metadata, ctx)
             return CommandResult.fail(f"Target '{t}' cannot be set with clock_calendar. Use settings tool.")
 
-        elif verb == "delete":
+        elif action == "delete":
             return timer_handlers.handle_delete(target, payload, metadata, ctx)
 
-        return CommandResult.fail(f"Verb '{verb}' not supported by {self.manifest.name}")
+        return CommandResult.fail(f"Verb '{action}' not supported by {self.manifest.name}")
 
 
 def _handle_sun(payload, metadata, ctx):

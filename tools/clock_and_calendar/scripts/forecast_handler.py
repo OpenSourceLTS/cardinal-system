@@ -2,15 +2,20 @@ from datetime import datetime, timezone
 from core.base_tool import CommandResult
 from .jdn import parse_date, gregorian_to_jdn
 from .moon import moon_phase, next_moon_phases
+from ..seasons.seasons_db import get_season, get_system
+from .time_utils import get_timezone_from_settings, local_now
 
 
-def handle_forecast(target, payload, metadata):
+def handle_forecast(target, payload, metadata, tz_name=None):
     t = target.lower()
     p = payload.strip() if payload else ""
 
+    if not tz_name or tz_name == "UTC":
+        tz_name = get_timezone_from_settings()
+
     d = parse_date(p) if p else None
     if not d:
-        now = datetime.now(timezone.utc)
+        now = local_now(tz_name)
         d = (now.year, now.month, now.day)
     jdn = gregorian_to_jdn(*d)
 
@@ -27,14 +32,11 @@ def handle_forecast(target, payload, metadata):
 
     elif t in ("season",):
         _, month, day = d
-        if (month == 3 and day >= 20) or month in (4, 5) or (month == 6 and day < 21):
-            season = "Spring"
-        elif (month == 6 and day >= 21) or month in (7, 8) or (month == 9 and day < 23):
-            season = "Summer"
-        elif (month == 9 and day >= 23) or month in (10, 11) or (month == 12 and day < 21):
-            season = "Autumn"
-        else:
-            season = "Winter"
+        season = get_season(tz_name, month, day)
+        system = get_system(tz_name)
+        system_label = system["label"] if system else ""
+        if system_label:
+            return CommandResult.ok(f"Season: {season} ({system_label})")
         return CommandResult.ok(f"Season: {season}")
 
     return CommandResult.fail(f"Unknown forecast: '{t}'. Try: moon, moon-phases, season")

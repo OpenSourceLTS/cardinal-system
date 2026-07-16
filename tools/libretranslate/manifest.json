@@ -1,141 +1,45 @@
 {
   "name": "libretranslate",
-  "description": "Self-hosted machine translation using LibreTranslate/Argos. Translate between 50+ languages. Auto-downloads models on first use. Supports detecting language of any text. Available language codes: ar (Arabic), az (Azerbaijani), bg (Bulgarian), bn (Bengali), ca (Catalan), cs (Czech), da (Danish), de (German), el (Greek), en (English), eo (Esperanto), es (Spanish), et (Estonian), eu (Basque), fa (Persian), fi (Finnish), fr (French), ga (Irish), gl (Galician), he (Hebrew), hi (Hindi), hu (Hungarian), id (Indonesian), it (Italian), ja (Japanese), ko (Korean), ky (Kyrgyz), lt (Lithuanian), lv (Latvian), ms (Malay), nb (Norwegian Bokmål), nl (Dutch), pb (Pushto), pl (Polish), pt (Portuguese), ro (Romanian), ru (Russian), sk (Slovak), sl (Slovenian), sq (Albanian), sv (Swedish), sw (Swahili), th (Thai), tl (Tagalog), tr (Turkish), uk (Ukrainian), ur (Urdu), vi (Vietnamese), zh (Chinese Simplified), zt (Chinese Traditional).",
+  "description": "Self-hosted machine translation. Translate between 50+ languages via LibreTranslate. Supports detect and translate.",
   "risk_tier": "NETWORK",
-  "actions": [
-    "translate",
-    "detect",
-    "list"
-  ],
-  "target_hint": "language_code (e.g. bn, fr, ja) for translate; leave empty for detect; 'languages' or 'installed' for list",
-  "payload_hint": "text | source_lang (translate); text to detect (detect)",
-  "manifest": {
-    "example": {
+  "functions": {
+    "translate_text": {
+      "description": "Translate text from one language to another",
+      "parameters": {
+        "text": { "type": "STRING", "description": "The text to translate" },
+        "target_lang": { "type": "STRING", "description": "Target language code (e.g., fr, bn, ja, de, es, ar, hi)" },
+        "source_lang": { "type": "STRING", "description": "Optional source language code or 'auto' for auto-detect (default: auto)" }
+      },
+      "required": ["text", "target_lang"],
+      "action": "translate",
+      "target_expr": "{target_lang}",
+      "payload_expr": "{text} | {source_lang}",
+      "templates": ["Translate '{text}' to {target_lang}", "What is '{text}' in {target_lang}?", "Translate '{text}' into {target_lang}", "How do you say '{text}' in {target_lang}?", "Say '{text}' in {target_lang}", "{text} in {target_lang} please", "What's the {target_lang} word for '{text}'?", "Convert '{text}' to {target_lang}", "Put '{text}' into {target_lang}", "tranzlate '{text}' 2 {target_lang}", "say '{text}' in {target_lang} plz", "whts '{text}' in {target_lang}"],
+      "examples": { "text": ["Hello world", "Good morning", "How are you?", "Thank you", "Please help me", "Nice to meet you"], "target_lang": ["fr", "bn", "es", "de", "ja", "ar", "hi"], "source_lang": ["en", "auto", "", "fr"] }
+    },
+    "detect_language": {
+      "description": "Detect the language of a piece of text",
+      "parameters": {
+        "text": { "type": "STRING", "description": "The text to detect the language of" }
+      },
+      "required": ["text"],
       "action": "detect",
-      "target": "",
-      "payload": "Bonjour le monde"
+      "target_expr": "",
+      "payload_expr": "{text}",
+      "templates": ["What language is '{text}'?", "Detect the language: '{text}'", "Identify the language of '{text}'", "Tell me what language this is: '{text}'", "Which language is '{text}'?", "wht lang iz '{text}'"],
+      "examples": { "text": ["Bonjour le monde", "Hola mundo", "Guten Tag", "Ciao mondo", "こんにちは"] }
     },
-    "a@p": {
-      "translate": [
-        [
-          "language_code",
-          "text | source_lang (source optional, defaults to en)"
-        ]
-      ],
-      "detect": [
-        [
-          "",
-          "text to detect language of"
-        ]
-      ],
-      "list": [
-        [
-          "languages",
-          ""
-        ],
-        [
-          "installed",
-          ""
-        ]
-      ]
+    "list_languages": {
+      "description": "List available translation languages or installed models",
+      "parameters": {
+        "scope": { "type": "STRING", "description": "Optional: 'languages' for all available, 'installed' for only installed models (default: languages)" }
+      },
+      "required": [],
+      "action": "list",
+      "target_expr": "{scope}",
+      "payload_expr": "",
+      "templates": ["List all languages", "Show me languages", "What languages do I have?", "Display available languages", "What languages are available?", "List installed", "Show installed models", "wat languages u got"],
+      "examples": { "scope": ["languages", "installed"] }
     }
-  },
-  "templates": {
-    "translate": {
-      "en": [
-        "Translate to {target}: {payload}",
-        "What is {payload} in {target}?",
-        "Translate {payload} into {target}"
-      ]
-    },
-    "detect": {
-      "en": [
-        "What language is this: {payload}",
-        "Detect the language: {payload}",
-        "Identify the language of: {payload}"
-      ]
-    },
-    "list": {
-      "en": [
-        "List all {target}",
-        "Show me {target}",
-        "What {target} do I have?",
-        "Display all {target}",
-        "Show all {target}"
-      ]
-    }
-  },
-  "payload_examples": {
-    "en": [
-      "Hello world | auto"
-    ],
-    "bn": [
-      "Bonjour le monde | auto"
-    ],
-    "fr": [
-      "Hello world | en"
-    ],
-    "ar": [
-      "Hello world | en"
-    ],
-    "es": [
-      "Hello world | en"
-    ],
-    "de": [
-      "Hello world | en"
-    ],
-    "ja": [
-      "Hello world | en"
-    ],
-    "ko": [
-      "Hello world | en"
-    ],
-    "zh": [
-      "Hello world | en"
-    ],
-    "hi": [
-      "Hello world | en"
-    ],
-    "pt": [
-      "Hello world | en"
-    ],
-    "ru": [
-      "Hello world | en"
-    ],
-    "it": [
-      "Hello world | en"
-    ],
-    "tr": [
-      "Hello world | en"
-    ],
-    "id": [
-      "Hello world | en"
-    ],
-    "th": [
-      "Hello world | en"
-    ],
-    "vi": [
-      "Hello world | en"
-    ],
-    "pl": [
-      "Hello world | en"
-    ],
-    "nl": [
-      "Hello world | en"
-    ],
-    "sv": [
-      "Hello world | en"
-    ],
-    "fa": [
-      "Hello world | en"
-    ],
-    "ur": [
-      "Hello world | en"
-    ],
-    "": [
-      "Hello world",
-      "Bonjour le monde",
-      "Hola mundo"
-    ]
   }
 }

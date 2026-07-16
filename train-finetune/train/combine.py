@@ -1,9 +1,9 @@
 """Combine training data from tool manifests into centralized config files.
 
 Usage:
-    python combine.py                          # writes templates.json, payload_examples.json, multi_tool_config.json
-    python combine.py --manifests-dir <path>   # custom manifests dir
-    python combine.py --output-dir <path>      # custom output dir
+    python combine.py
+    python combine.py --manifests-dir <path>
+    python combine.py --output-dir <path>
 """
 import argparse, json, sys
 from pathlib import Path
@@ -15,25 +15,30 @@ def load_json(path):
 
 
 def combine(manifests_dir, output_dir):
-    """Read all manifests and write templates.json, payload_examples.json, multi_tool_config.json."""
+    """Read all manifests and write combined config files for the new format."""
     templates = {}
     payload_examples = {}
+    all_functions = {}
     multi_tool = None
 
     for mp in sorted(manifests_dir.glob("*/manifest.json")):
         data = load_json(mp)
         name = data.get("name", mp.parent.stem)
+        functions = data.get("functions", {})
 
-        tool_templates = data.get("templates", {})
-        for action, langs in tool_templates.items():
-            if action not in templates:
-                templates[action] = langs
-            elif templates[action] != langs:
-                print(f"  WARNING: {name} has different templates for '{action}' — keeping first")
+        fn_list = []
+        for func_name, fn_def in functions.items():
+            fn_list.append(func_name)
+            # Collect templates per function
+            fn_templates = fn_def.get("templates", [])
+            if fn_templates:
+                templates[func_name] = fn_templates
+            # Collect examples per function
+            fn_examples = fn_def.get("examples", {})
+            if fn_examples:
+                payload_examples[func_name] = fn_examples
 
-        tool_payloads = data.get("payload_examples", {})
-        if tool_payloads:
-            payload_examples[name] = tool_payloads
+        all_functions[name] = fn_list
 
         if name == "llm" and "multi_tool" in data:
             multi_tool = data["multi_tool"]
@@ -63,8 +68,8 @@ def main():
     manifests_dir = Path(args.manifests_dir) if args.manifests_dir else base.parent.parent / "tools"
 
     t_count, p_count, m_total = combine(manifests_dir, out_dir)
-    print(f"templates.json: {t_count} actions")
-    print(f"payload_examples.json: {p_count} tools")
+    print(f"templates.json: {t_count} functions")
+    print(f"payload_examples.json: {p_count} functions")
     print(f"multi_tool_config.json: {m_total} entries")
     print(f"\nDone! Files written to {out_dir}")
 

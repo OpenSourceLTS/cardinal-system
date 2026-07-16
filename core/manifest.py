@@ -3,13 +3,10 @@ from typing import List, Optional, Dict, Any
 from enum import Enum
 from pathlib import Path
 import json
+import re
 
 
-# Reference vocabulary of all known action verbs in the system.
-# When creating a new tool, prefer using an existing verb from this list.
-# If none fits, add a new one — this list tracks every top-level action name.
-# Each tool declares its own subset under "actions" in manifest.json;
-# the router validates against the tool's own list, not this master list.
+# Reference vocabulary of all known action actions in the system.
 CANONICAL_ACTIONS = [
     "append", "approve", "archive", "ask", "block", "bookmark", "branch",
     "calculate", "change", "cancel", "check", "clear", "comment", "commit",
@@ -33,7 +30,6 @@ CANONICAL_ACTIONS = [
 ]
 
 
-# Safety classification for every tool.
 class RiskTier(Enum):
     SAFE = 0
     STATEFUL = 1
@@ -41,8 +37,6 @@ class RiskTier(Enum):
     DESTRUCTIVE = 3
 
 
-# Structured metadata for a tool. Used by the Router for validation
-# and by MCP server for building AI-facing descriptions.
 @dataclass(frozen=True)
 class ToolManifest:
     name: str
@@ -50,6 +44,7 @@ class ToolManifest:
     actions: List[str]
     target_hint: str
     payload_hint: str
+    functions: Dict[str, dict]
     metadata_schema: Optional[Dict[str, str]] = None
     risk_tier: RiskTier = RiskTier.SAFE
     requires_confirmation: bool = False
@@ -62,25 +57,34 @@ class ToolManifest:
             "NETWORK": RiskTier.NETWORK,
             "DESTRUCTIVE": RiskTier.DESTRUCTIVE,
         }
+        funcs = data.get("functions", {})
+        actions = sorted(set(
+            fn.get("action", "") for fn in funcs.values() if fn.get("action")
+        ))
+        targets = sorted(set(
+            expr for fn in funcs.values()
+            for key in ("target", "target_expr")
+            for expr in [fn.get(key, "")]
+            if expr and not expr.startswith("{")
+        ))
         return cls(
             name=data["name"],
             description=data.get("description", ""),
-            actions=data.get("actions", []),
-            target_hint=data.get("target_hint", ""),
-            payload_hint=data.get("payload_hint", ""),
+            actions=actions,
+            target_hint=", ".join(targets) if targets else "",
+            payload_hint="value",
+            functions=funcs,
             metadata_schema=data.get("metadata_schema", {}),
             risk_tier=risk_map.get(data.get("risk_tier", "SAFE"), RiskTier.SAFE),
         )
 
 
-# Internal state for tool discovery
 _TOOLS_ROOT = Path(__file__).parent.parent / "tools"
 _MANIFEST_CACHE: Dict[str, dict] = {}
-
 _TOOL_DIR_MAP: dict[str, str] = {}
+_FUNCTION_REGISTRY_CACHE: Dict[str, dict] = {}
 
 
-# Builds a tool-name-to-directory-name mapping by scanning tools/*/manifest.json
 def _index_tool_dirs():
     if _TOOL_DIR_MAP:
         return
@@ -101,11 +105,9 @@ def _index_tool_dirs():
             _TOOL_DIR_MAP[folder.name] = folder.name
 
 
-# Returns the raw JSON dict from a tool's manifest.json (cached).
 def load_manifest(tool_name: str) -> dict:
     if tool_name in _MANIFEST_CACHE:
         return _MANIFEST_CACHE[tool_name]
-
     _index_tool_dirs()
     dir_name = _TOOL_DIR_MAP.get(tool_name, tool_name)
     path = _TOOLS_ROOT / dir_name / "manifest.json"
@@ -121,49 +123,89 @@ def load_manifest(tool_name: str) -> dict:
     return {}
 
 
-# Returns all tool manifest dicts that have the required fields.
-# Used by MCP server (to register tools) and engine (to build system prompt).
 def discover_tools() -> List[dict]:
     tools = []
     _index_tool_dirs()
     for tool_name, dir_name in _TOOL_DIR_MAP.items():
         data = load_manifest(tool_name)
-        required = ["name", "description", "actions", "manifest"]
-        if all(k in data for k in required):
+        if data.get("name") and data.get("description") and data.get("functions"):
             tools.append(data)
     return tools
 
 
-# Extracts literal target values for a tool+verb from the a@p map.
-# Returns empty list when the manifest uses descriptive placeholders
-# (like "filename", "keyword") — in that case skip validation.
-def get_valid_targets(tool_name: str, verb: str) -> List[str]:
-    import re
+def get_function_registry() -> Dict[str, dict]:
+    global _FUNCTION_REGISTRY_CACHE
+    if _FUNCTION_REGISTRY_CACHE:
+        return _FUNCTION_REGISTRY_CACHE
+    registry = {}
+    _index_tool_dirs()
+    for tool_name in _TOOL_DIR_MAP:
+        data = load_manifest(tool_name)
+        functions = data.get("functions", {})
+        for func_name, fn_def in functions.items():
+            registry[func_name] = {
+                "tool": tool_name,
+                "action": fn_def.get("action", ""),
+                "target_expr": fn_def.get("target_expr") or fn_def.get("target", ""),
+                "payload_expr": fn_def.get("payload_expr") or fn_def.get("payload", ""),
+                "parameters": fn_def.get("parameters", {}),
+                "required": fn_def.get("required", []),
+                "description": fn_def.get("description", ""),
+            }
+    _FUNCTION_REGISTRY_CACHE = registry
+    return registry
+
+
+def resolve_function_call(func_name: str, arguments: dict) -> tuple:
+    """Convert a function call with specific params to (tool, action, target, payload)."""
+    registry = get_function_registry()
+    entry = registry.get(func_name)
+    if not entry:
+        return None, None, None, None
+
+    tool = entry["tool"]
+    action = entry["action"]
+    target_expr = entry.get("target_expr", "")
+    payload_expr = entry.get("payload_expr", "")
+
+    def resolve_template(template: str) -> str:
+        if not template:
+            return ""
+        result = template
+        for key, val in arguments.items():
+            placeholder = "{" + key + "}"
+            result = result.replace(placeholder, (val or "").strip())
+        import re
+        result = re.sub(r'\{(\w+)\}', '', result)
+        result = re.sub(r'\s*\|\s*$', '', result)
+        result = re.sub(r'^\s*\|\s*', '', result)
+        result = re.sub(r'  +', ' ', result).strip()
+        return result
+
+    target = resolve_template(target_expr)
+    payload = resolve_template(payload_expr)
+
+    return tool, action, target, payload
+
+
+def get_valid_targets(tool_name: str, action: str) -> List[str]:
     data = load_manifest(tool_name)
-    manifest = data.get("manifest", {})
-    verb_map = manifest.get("a@p", {})
-    entries = verb_map.get(verb, [])
+    functions = data.get("functions", {})
     valid = []
-    for entry in entries:
-        t = entry[0] if entry else ""
-        if not t:
-            valid.append(t)
-        elif re.match(r'^[a-z_][a-z0-9_]*$', t):
-            return []
-        else:
-            valid.append(t)
+    for fn_name, fn_def in functions.items():
+        if fn_def.get("action") == action:
+            target_expr = fn_def.get("target_expr", "")
+            if not target_expr or target_expr.startswith("{"):
+                return []
+            valid.append(target_expr)
     return valid
 
 
-# Converts a tool name to its filesystem directory name
-# (e.g. "clock_calendar" -> "clock_and_calendar").
 def tool_dir(tool_name: str) -> str:
     _index_tool_dirs()
     return _TOOL_DIR_MAP.get(tool_name, tool_name)
 
 
-# Dynamically imports the BaseTool subclass from a tool's directory.
-# Convention: tools/{dir}/{tool_name}_tool.py contains a class inheriting BaseTool.
 def load_tool_class(tool_name: str):
     import importlib
     from .base_tool import BaseTool
@@ -179,3 +221,4 @@ def load_tool_class(tool_name: str):
 def clear_cache():
     _MANIFEST_CACHE.clear()
     _TOOL_DIR_MAP.clear()
+    _FUNCTION_REGISTRY_CACHE.clear()

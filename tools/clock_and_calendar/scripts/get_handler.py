@@ -138,8 +138,16 @@ def handle_get(target, payload, metadata, ctx):
     now = local_now(tz_lookup)
     if tgt in ("current_time", "time"):
         return CommandResult.ok(f"{format_time(now, include_seconds=True)} in {p}" if p else format_time(now, include_seconds=True))
-    if tgt in ("current_date", "date"):
+    if tgt in ("current_date", "date", "today"):
         return CommandResult.ok(f"{now.year:04d}-{now.month:02d}-{now.day:02d}")
+    if tgt == "yesterday":
+        from datetime import timedelta
+        y = now - timedelta(days=1)
+        return CommandResult.ok(f"{y.year:04d}-{y.month:02d}-{y.day:02d}")
+    if tgt == "tomorrow":
+        from datetime import timedelta
+        t = now + timedelta(days=1)
+        return CommandResult.ok(f"{t.year:04d}-{t.month:02d}-{t.day:02d}")
     if tgt in ("current_datetime", "datetime"):
         result = f"{now.strftime('%Y-%m-%d')} {format_time(now, include_seconds=True)}"
         return CommandResult.ok(f"{result} in {p}" if p else result)

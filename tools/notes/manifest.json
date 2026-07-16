@@ -2,195 +2,122 @@
   "name": "notes",
   "description": "CRUD for .md notes in memory/notes/. Supports line-level editing, timestamps, and find/replace.",
   "risk_tier": "STATEFUL",
-  "actions": [
-    "list",
-    "read",
-    "save",
-    "append",
-    "delete",
-    "change",
-    "rename",
-    "search"
-  ],
-  "target_hint": "filename",
-  "payload_hint": "content, line numbers, or find/replace query",
-  "manifest": {
-    "example": {
+  "functions": {
+    "list_notes": {
+      "description": "List all saved notes with file sizes and modification dates",
+      "parameters": {},
+      "required": [],
+      "action": "list",
+      "target_expr": "",
+      "payload_expr": "",
+      "templates": ["List my notes", "Show me my notes", "What notes do I have?", "Display all notes", "Show all notes", "List all notes", "Give me my notes", "What notes are saved?"],
+      "examples": {}
+    },
+    "read_note": {
+      "description": "Read the contents of a note",
+      "parameters": {
+        "filename": { "type": "STRING", "description": "The note filename (without .md extension)" },
+        "lines": { "type": "STRING", "description": "Optional line number or range (e.g., 3 or 3-5)" }
+      },
+      "required": ["filename"],
+      "action": "read",
+      "target_expr": "{filename}",
+      "payload_expr": "{lines}",
+      "templates": ["Read {filename}", "Open {filename}", "Show me {filename}", "View {filename}", "Display {filename}", "Let me see {filename}", "Pull up {filename}", "Show the content of {filename}"],
+      "examples": { "filename": ["groceries", "todo", "notes", "meeting-notes", "reminders"], "lines": ["", "3", "3-5"] }
+    },
+    "save_note": {
+      "description": "Save content to a new or existing note",
+      "parameters": {
+        "content": { "type": "STRING", "description": "The content to save" },
+        "filename": { "type": "STRING", "description": "Optional filename (without .md). Auto-generated from first 3 words if omitted" }
+      },
+      "required": ["content"],
+      "action": "save",
+      "target_expr": "{filename}",
+      "payload_expr": "{content}",
+      "templates": ["Save: {content}", "Remember: {content}", "Make a note: {content}", "Take note: {content}", "Save this: {content}", "Record: {content}", "Keep this: {content}", "Jot this down: {content}", "Note this down: {content}", "Capture this: {content}", "Put this in a note: {content}", "Save to {filename}: {content}", "Create note {filename} with {content}", "Write {filename}: {content}", "remembr: {content}", "dont 4get: {content}", "write dis down: {content}"],
+      "examples": { "content": ["Buy milk and eggs", "Finish report", "Call dentist", "meeting at 3pm tomorrow", "project deadline is Friday", "buy milk and eggs on the way home", "Sarah's birthday is on March 15th"], "filename": ["groceries", "todo", "reminders", "meeting-notes", ""] }
+    },
+    "append_note": {
+      "description": "Append content to the end of an existing note",
+      "parameters": {
+        "filename": { "type": "STRING", "description": "The note filename (without .md extension)" },
+        "content": { "type": "STRING", "description": "Content to append to the note" }
+      },
+      "required": ["filename", "content"],
+      "action": "append",
+      "target_expr": "{filename}",
+      "payload_expr": "{content}",
+      "templates": ["Append to {filename}: {content}", "Add to {filename}: {content}", "Add more to {filename}: {content}", "Update {filename} with {content}", "Insert into {filename}: {content}", "Add this to {filename}: {content}", "Extend {filename} with {content}"],
+      "examples": { "filename": ["groceries", "todo", "notes"], "content": ["Milk, eggs, bread", "Buy groceries, call dentist", "Finish report, email team"] }
+    },
+    "delete_note": {
+      "description": "Delete an entire note file or specific lines",
+      "parameters": {
+        "filename": { "type": "STRING", "description": "The note filename to delete (without .md)" },
+        "lines": { "type": "STRING", "description": "Optional: line number or range to delete instead of the whole file" }
+      },
+      "required": ["filename"],
+      "action": "delete",
+      "target_expr": "{filename}",
+      "payload_expr": "{lines}",
+      "templates": ["Delete {filename}", "Remove {filename}", "Clear {filename}", "Erase {filename}", "Get rid of {filename}", "Trash {filename}", "Discard {filename}", "del {filename}", "remov {filename}"],
+      "examples": { "filename": ["groceries", "todo", "temp"], "lines": ["", "3", "3-5"] }
+    },
+    "replace_in_note": {
+      "description": "Find and replace text in a note",
+      "parameters": {
+        "filename": { "type": "STRING", "description": "The note filename" },
+        "old_text": { "type": "STRING", "description": "The text to find and replace" },
+        "new_text": { "type": "STRING", "description": "The replacement text" }
+      },
+      "required": ["filename", "old_text", "new_text"],
       "action": "change",
-      "target": "groceries",
-      "payload": "milk -> oat milk"
+      "target_expr": "{filename}",
+      "payload_expr": "{old_text} -> {new_text}",
+      "templates": ["In {filename}: replace {old_text} with {new_text}", "Change {old_text} to {new_text} in {filename}", "Update {filename}: {old_text} -> {new_text}", "Modify {filename}: replace {old_text} with {new_text}"],
+      "examples": { "filename": ["groceries", "todo"], "old_text": ["milk", "banana", "eggs"], "new_text": ["oat milk", "apple", "tofu"] }
     },
-    "a@p": {
-      "list": [
-        [
-          "",
-          "list all note filenames with created/modified dates"
-        ]
-      ],
-      "read": [
-        [
-          "filename",
-          "line/range (optional, e.g., 3 or 3-5)"
-        ]
-      ],
-      "save": [
-        [
-          "filename",
-          "content"
-        ],
-        [
-          "",
-          "content (auto-name from first 3 words)"
-        ]
-      ],
-      "append": [
-        [
-          "filename",
-          "content to add to the end of the note"
-        ]
-      ],
-      "delete": [
-        [
-          "filename",
-          "line/range (optional, deletes whole file if omitted)"
-        ]
-      ],
-      "change": [
-        [
-          "filename",
-          "line | new_content (replace line)"
-        ],
-        [
-          "filename",
-          "+line | content (insert before line)"
-        ],
-        [
-          "filename",
-          "old_text -> new_text (find and replace)"
-        ]
-      ],
-      "rename": [
-        [
-          "filename",
-          "new_filename"
-        ]
-      ],
-      "search": [
-        [
-          "filename (optional)",
-          "keyword (returns matching lines and line numbers)"
-        ]
-      ]
+    "edit_note_line": {
+      "description": "Replace or insert a specific line in a note",
+      "parameters": {
+        "filename": { "type": "STRING", "description": "The note filename" },
+        "line_number": { "type": "STRING", "description": "Line number to replace, or +N to insert before line N" },
+        "content": { "type": "STRING", "description": "The new content for the line" }
+      },
+      "required": ["filename", "line_number", "content"],
+      "action": "change",
+      "target_expr": "{filename}",
+      "payload_expr": "{line_number} | {content}",
+      "templates": ["In {filename}: change line {line_number} to {content}", "Edit line {line_number} of {filename}: {content}", "Update {filename} line {line_number}: {content}"],
+      "examples": { "filename": ["groceries", "todo"], "line_number": ["3", "+2", "1"], "content": ["Buy oat milk", "Call dentist tomorrow", "Finish report"] }
+    },
+    "rename_note": {
+      "description": "Rename a note file",
+      "parameters": {
+        "old_name": { "type": "STRING", "description": "Current note filename (without .md)" },
+        "new_name": { "type": "STRING", "description": "New note filename (without .md)" }
+      },
+      "required": ["old_name", "new_name"],
+      "action": "rename",
+      "target_expr": "{old_name}",
+      "payload_expr": "{new_name}",
+      "templates": ["Rename {old_name} to {new_name}", "Change {old_name} name to {new_name}", "Rename {old_name} as {new_name}", "Relabel {old_name} to {new_name}"],
+      "examples": { "old_name": ["oldnote", "temp", "draft"], "new_name": ["newnote", "permanent", "final"] }
+    },
+    "search_notes": {
+      "description": "Search notes for a keyword in filenames and content",
+      "parameters": {
+        "query": { "type": "STRING", "description": "The search keyword or phrase" },
+        "filename": { "type": "STRING", "description": "Optional: restrict search to a specific note" }
+      },
+      "required": ["query"],
+      "action": "search",
+      "target_expr": "{filename}",
+      "payload_expr": "{query}",
+      "templates": ["Search for {query}", "Find {query}", "Look up {query}", "Search {filename} for {query}", "Find {query} in {filename}", "Dig up {query}", "Locate {query}", "find {query}", "look 4 {query}", "seach {query}"],
+      "examples": { "query": ["groceries", "meeting", "call", "birthday"], "filename": ["", "todo", "notes"] }
     }
-  },
-  "templates": {
-    "list": {
-      "en": [
-        "List all {target}",
-        "Show me {target}",
-        "What {target} do I have?",
-        "Display all {target}",
-        "Show all {target}"
-      ]
-    },
-    "read": {
-      "en": [
-        "Read {target}",
-        "Open {target}",
-        "Show me {target}",
-        "View {target}",
-        "Display {target}"
-      ]
-    },
-    "save": {
-      "en": [
-        "Save {target}: {payload}",
-        "Create note {target} with {payload}",
-        "Write {target}: {payload}",
-        "Store {target}: {payload}",
-        "Save to {target}: {payload}"
-      ]
-    },
-    "append": {
-      "en": [
-        "Append to {target}: {payload}",
-        "Add to {target}: {payload}",
-        "Add more to {target}: {payload}",
-        "Update {target} with {payload}",
-        "Insert into {target}: {payload}"
-      ]
-    },
-    "delete": {
-      "en": [
-        "Delete {target}",
-        "Remove {target}",
-        "Clear {target}",
-        "Erase {target}",
-        "Get rid of {target}"
-      ]
-    },
-    "change": {
-      "en": [
-        "In {target}: {payload}",
-        "Change {target}: {payload}",
-        "Update {target}: {payload}",
-        "Modify {target}: {payload}"
-      ]
-    },
-    "rename": {
-      "en": [
-        "Rename {target} to {payload}",
-        "Change {target} name to {payload}",
-        "Rename {target} as {payload}"
-      ]
-    },
-    "search": {
-      "en": [
-        "Search for {payload}",
-        "Find {payload}",
-        "Look up {payload}",
-        "Search {target} for {payload}",
-        "Find {payload} in {target}"
-      ]
-    }
-  },
-  "payload_examples": {
-    "groceries": [
-      "Milk, eggs, bread",
-      "Rice, lentils, oil",
-      "Apples, bananas, yogurt",
-      "Coffee, sugar, cream"
-    ],
-    "translation": [
-      "Bonjour le monde",
-      "Hello world",
-      "Hola mundo",
-      "Guten Tag"
-    ],
-    "time_check": [
-      "Current time: 14:30",
-      "Time is 09:15",
-      "It's 18:45 now"
-    ],
-    "meeting_notes": [
-      "Discuss Q1 goals",
-      "Project review on Friday",
-      "Budget planning next week"
-    ],
-    "todo": [
-      "Buy groceries, call dentist",
-      "Finish report, email team",
-      "Book flight, pack luggage"
-    ],
-    "meeting_minutes": [
-      "Decided to launch in March",
-      "Action items: Sarah owns QA",
-      "Budget approved for Q2"
-    ],
-    "daily_log": [
-      "Worked on feature X",
-      "Fixed bug in login",
-      "Reviewed PR #42"
-    ]
   }
 }

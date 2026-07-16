@@ -13,16 +13,16 @@ class CommandResult:
     value: Any = None
     error: Optional[str] = None
     tool: str = ""
-    verb: str = ""
+    action: str = ""
     target: str = ""
 
     @staticmethod
-    def ok(value, tool="", verb="", target=""):
-        return CommandResult(True, value=value, tool=tool, verb=verb, target=target)
+    def ok(value, tool="", action="", target=""):
+        return CommandResult(True, value=value, tool=tool, action=action, target=target)
 
     @staticmethod
-    def fail(msg, tool="", verb="", target=""):
-        return CommandResult(False, error=msg, tool=tool, verb=verb, target=target)
+    def fail(msg, tool="", action="", target=""):
+        return CommandResult(False, error=msg, tool=tool, action=action, target=target)
 
 
 # Shared state passed through a pipeline of tool calls.
@@ -49,16 +49,16 @@ class ExecutionContext:
 
 # Abstract base for every Cardinal tool.
 # Subclasses must provide a manifest (metadata from manifest.json)
-# and an execute() method that routes verb/target/payload to the right handler.
+# and an execute() method that routes action/target/payload to the right handler.
 class BaseTool(ABC):
     @property
     @abstractmethod
     def manifest(self) -> ToolManifest: ...
 
     @abstractmethod
-    def execute(self, verb: str, target: str, payload: Optional[str],
+    def execute(self, action: str, target: str, payload: Optional[str],
                 metadata: dict, ctx: ExecutionContext) -> CommandResult: ...
 
     # Optional pre-execution hook; return an error string to block the call.
-    def validate(self, verb, target, payload, metadata) -> Optional[str]:
+    def validate(self, action, target, payload, metadata) -> Optional[str]:
         return None
