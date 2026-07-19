@@ -128,6 +128,12 @@
       "duration": 30,
       "target": 1784221261.7882597,
       "label": "30s"
+    },
+    {
+      "id": "4a9bf30c",
+      "duration": 30,
+      "target": 1784222495.219239,
+      "label": "30s"
     }
   ],
   "stopwatch": {

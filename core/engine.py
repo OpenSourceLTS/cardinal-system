@@ -76,7 +76,9 @@ def _select_tools(query: str, tools_spec: list[dict], max_tools: int = _MAX_TOOL
     scored.sort(key=lambda x: -x[0])
     selected = [spec for score, spec in scored if score > 0]
     if not selected:
-        return tools_spec[:max_tools]
+        # No tools matched — route to AI for general chat
+        forward_spec = [s for s in tools_spec if s["function"]["name"] == "forward_to_ai"]
+        return forward_spec[:max_tools] if forward_spec else []
     return selected[:max_tools]
 
 
